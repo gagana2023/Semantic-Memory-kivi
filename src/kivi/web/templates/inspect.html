@@ -1,1 +1,249 @@
-<!doctype html><link rel="stylesheet" href="/static/kivi.css"><title>Kivi — Inspect</title><nav><a href="/">Dictation</a> <a href="/hey">Hey Kivi</a> <a href="/inspect">Inspect</a></nav><h1>Inspect citation / Why</h1><p>Enter a transcript ID to view durable decision traces and provenance.</p><form id="i"><input name="id" required placeholder="trn_..."><button>Inspect</button></form><pre id="out"></pre><script>document.querySelector('#i').onsubmit=async e=>{e.preventDefault();let r=await fetch('/v1/inspect/'+new FormData(e.target).get('id'));out.textContent=await r.text()}</script>
+{% extends "base.html" %}
+{% block title %}Your memory — Kivi{% endblock %}
+
+{% block content %}
+<section class="memory-shell">
+  <header class="memory-hero">
+    <div class="memory-title-block">
+      <div class="mode-eyebrow"><span class="mode-number">03</span><span>Your memory</span></div>
+      <h1>Useful memory.<br><em>Not a profile.</em></h1>
+      <p>Every item comes from your work, has a source, and can be changed by you.</p>
+    </div>
+    <div class="memory-constellation" aria-hidden="true">
+      <span class="constellation-line line-a"></span><span class="constellation-line line-b"></span>
+      <i class="node-main">k</i><i class="node node-a"></i><i class="node node-b"></i><i class="node node-c"></i>
+      <span class="constellation-tag tag-a">said</span><span class="constellation-tag tag-b">noticed</span>
+    </div>
+    <div class="memory-hero-note">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 19 6v5c0 4.4-2.9 8.1-7 9.5C7.9 19.1 5 15.4 5 11V6l7-2.5Z"/><path d="M9 12h6"/></svg>
+      <div><strong>Kivi doesn’t build a psychological profile.</strong><span>It keeps small, correctable work memories.</span></div>
+    </div>
+  </header>
+
+  <div class="memory-workspace">
+    <div class="memory-toolbar">
+      <div class="memory-tabs" role="tablist" aria-label="Memory groups">
+        <button type="button" role="tab" aria-selected="true" data-tier="stated">
+          <span class="tier-swatch stated"></span><span>Things you told me</span><strong id="stated-count">—</strong>
+        </button>
+        <button type="button" role="tab" aria-selected="false" data-tier="observed">
+          <span class="tier-swatch observed"></span><span>Things I've noticed</span><strong id="observed-count">—</strong>
+        </button>
+        <button type="button" role="tab" aria-selected="false" data-tier="hypothesis">
+          <span class="tier-swatch hypothesis"></span><span>Things I'm wondering about</span><strong id="hypothesis-count">—</strong>
+        </button>
+      </div>
+      <label class="memory-search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+        <span class="sr-only">Search your memory</span>
+        <input id="memory-search" type="search" placeholder="Find a memory">
+      </label>
+    </div>
+
+    <section class="memory-group" aria-live="polite">
+      <header class="memory-group-head">
+        <div><span class="field-kicker" id="group-kicker">What you said</span><h2 id="group-title">Things you told me</h2></div>
+        <p id="group-description">Facts and preferences you directly shared. Kivi can use these in Hey Kivi.</p>
+      </header>
+      <div class="memory-grid" id="memory-grid">
+        <div class="memory-skeleton"></div><div class="memory-skeleton"></div><div class="memory-skeleton"></div>
+      </div>
+    </section>
+  </div>
+</section>
+
+<div class="drawer-backdrop" id="memory-backdrop" hidden></div>
+<aside class="detail-drawer memory-drawer" id="memory-drawer" aria-labelledby="memory-drawer-title" aria-hidden="true">
+  <header class="drawer-head">
+    <button class="back-button" type="button" id="drawer-back" hidden aria-label="Back to memory details"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
+    <div><span class="field-kicker" id="drawer-kicker">Memory details</span><h2 id="memory-drawer-title">A memory you control</h2></div>
+    <button class="icon-button" type="button" id="close-memory" aria-label="Close memory details"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </header>
+  <div class="drawer-body" id="memory-detail"></div>
+</aside>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+  const tierMeta = {
+    stated: {title: 'Things you told me', kicker: 'What you said', description: 'Facts and preferences you directly shared. Kivi can use these in Hey Kivi.'},
+    observed: {title: "Things I've noticed", kicker: 'Patterns with evidence', description: 'Patterns in your work. Kivi labels these as observations and only mentions them in Koottu.'},
+    hypothesis: {title: "Things I'm wondering about", kicker: 'Questions, not conclusions', description: 'Possible explanations Kivi may ask about—only when you invite that kind of thought.'}
+  };
+  const grid = document.querySelector('#memory-grid');
+  const search = document.querySelector('#memory-search');
+  const tabs = [...document.querySelectorAll('[data-tier]')];
+  const drawer = document.querySelector('#memory-drawer');
+  const backdrop = document.querySelector('#memory-backdrop');
+  const detail = document.querySelector('#memory-detail');
+  const backButton = document.querySelector('#drawer-back');
+  let groups = {stated: [], observed: [], hypothesis: []};
+  let activeTier = 'stated';
+  let activeMemoryId = null;
+  let activeMemoryData = null;
+  let handledRequestedOpen = false;
+
+  const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+  const makeKey = () => globalThis.crypto?.randomUUID?.() || ('memory-' + Date.now() + '-' + Math.random().toString(16).slice(2));
+  const humanDate = value => {
+    if (!value) return 'Date unavailable';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Date unavailable' : new Intl.DateTimeFormat(undefined, {day:'numeric', month:'short', year:'numeric'}).format(date);
+  };
+  const sentence = memory => [memory.name, memory.relation, memory.value].filter(Boolean).join(' ');
+
+  function renderCards() {
+    const query = search.value.trim().toLowerCase();
+    const items = (groups[activeTier] || []).filter(memory => sentence(memory).toLowerCase().includes(query));
+    if (!items.length) {
+      const empty = query ? 'No memories match that search.' : activeTier === 'stated' ? 'Nothing here yet. Dictate a work fact and it can appear here after Kivi processes it.' : 'This space is clear for now.';
+      grid.innerHTML = `<div class="memory-empty"><span class="empty-orb">k</span><strong>${escapeHtml(empty)}</strong>${!query && activeTier === 'stated' ? '<a href="/">Create a dictation →</a>' : ''}</div>`;
+      return;
+    }
+    grid.innerHTML = items.map(memory => `
+      <button type="button" class="memory-card tier-${escapeHtml(activeTier)}" data-memory-id="${escapeHtml(memory.id)}">
+        <span class="memory-card-top"><span class="memory-type">${escapeHtml(memory.kind)}</span>${memory.pinned ? '<span class="pin-mark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 4 8 0-1 5 3 3v1H6v-1l3-3-1-5ZM12 13v7"/></svg>Pinned</span>' : ''}</span>
+        <span class="memory-sentence">${escapeHtml(sentence(memory))}</span>
+        <span class="memory-card-meta"><span><strong>${memory.evidence_count || 1}</strong> ${(memory.evidence_count || 1) === 1 ? 'source' : 'sources'}</span><span>Seen ${escapeHtml(humanDate(memory.last_seen_at || memory.created_at))}</span></span>
+        <span class="open-memory">Open <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
+      </button>`).join('');
+  }
+
+  function selectTier(tier) {
+    activeTier = tier;
+    tabs.forEach(tab => tab.setAttribute('aria-selected', String(tab.dataset.tier === tier)));
+    document.querySelector('#group-title').textContent = tierMeta[tier].title;
+    document.querySelector('#group-kicker').textContent = tierMeta[tier].kicker;
+    document.querySelector('#group-description').textContent = tierMeta[tier].description;
+    renderCards();
+  }
+
+  async function loadMemories() {
+    try {
+      const response = await fetch('/v1/memories');
+      const data = await response.json();
+      if (!response.ok) throw new Error();
+      groups = data.groups || groups;
+      Object.keys(groups).forEach(tier => { const count = document.querySelector('#' + tier + '-count'); if (count) count.textContent = groups[tier].length; });
+      renderCards();
+      const requested = new URLSearchParams(location.search).get('open');
+      if (requested && !handledRequestedOpen) { handledRequestedOpen = true; openMemory(requested); }
+    } catch (_) {
+      grid.innerHTML = '<div class="memory-empty"><span class="empty-orb">!</span><strong>Your memory could not be loaded.</strong><button type="button" id="retry-memory">Try again</button></div>';
+      document.querySelector('#retry-memory')?.addEventListener('click', loadMemories);
+    }
+  }
+
+  function openDrawer() {
+    backdrop.hidden = false;
+    drawer.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('drawer-open');
+  }
+  function closeDrawer() {
+    drawer.setAttribute('aria-hidden', 'true');
+    backdrop.hidden = true;
+    document.body.classList.remove('drawer-open');
+    backButton.hidden = true;
+  }
+  document.querySelector('#close-memory').addEventListener('click', closeDrawer);
+  backdrop.addEventListener('click', closeDrawer);
+  document.addEventListener('keydown', event => { if (event.key === 'Escape') closeDrawer(); });
+
+  function actionButton(action, label, description, tone = '') {
+    return `<button type="button" class="memory-action ${tone}" data-action="${action}"><span><strong>${label}</strong><small>${description}</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>`;
+  }
+
+  function renderMemoryDetail(data) {
+    activeMemoryData = data;
+    const memory = data.memory;
+    const sourceCount = data.provenance?.length || 0;
+    const shownSourceCount = sourceCount || 1;
+    const basisLabel = memory.basis === 'stated' ? 'You told Kivi' : memory.basis === 'observed' ? 'Kivi noticed' : 'Kivi is wondering';
+    document.querySelector('#drawer-kicker').textContent = basisLabel;
+    document.querySelector('#memory-drawer-title').textContent = 'A memory you control';
+    backButton.hidden = true;
+    const sources = (data.provenance || []).map(source => `
+      <button type="button" class="source-row" data-transcript-id="${escapeHtml(source.id)}">
+        <span class="source-date">${escapeHtml(humanDate(source.occurred_at))}</span><span>${escapeHtml(source.formatted_text)}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+      </button>`).join('');
+    const history = (data.history || []).slice().reverse().map((version, index) => `<li><span class="history-dot ${index === 0 ? 'current' : ''}"></span><div><strong>${index === 0 ? 'Current' : escapeHtml(version.action || 'Earlier version')}</strong><p>${escapeHtml([version.name, version.relation, version.value].filter(Boolean).join(' '))}</p><small>${escapeHtml(humanDate(version.created_at))}</small></div></li>`).join('');
+    const confirm = memory.basis === 'observed' ? actionButton('confirm', 'Yes, keep this as a fact', 'Kivi can use it like something you told it.') : '';
+    const pinLabel = memory.pinned ? 'Unpin this memory' : 'Keep this close';
+    const pinDescription = memory.pinned ? 'Return it to normal priority.' : 'Pin it so it stays easy to find.';
+    detail.innerHTML = `
+      <section class="memory-detail-hero tier-${escapeHtml(memory.basis)}">
+        <span class="memory-type">${escapeHtml(memory.kind)}</span><blockquote>${escapeHtml(sentence(memory))}</blockquote>
+        <div class="detail-meta"><span><strong>${shownSourceCount}</strong> ${shownSourceCount === 1 ? 'source' : 'sources'}</span><span>Added ${escapeHtml(humanDate(memory.created_at))}</span></div>
+      </section>
+      <section class="detail-section"><div class="detail-section-head"><span class="field-kicker">Where this came from</span><h3>Your source ${sourceCount === 1 ? 'note' : 'notes'}</h3></div><div class="source-list">${sources || '<p class="subtle-copy">No source preview is available.</p>'}</div></section>
+      <section class="detail-section"><div class="detail-section-head"><span class="field-kicker">Change it</span><h3>You have the final say</h3></div><div class="memory-actions">${confirm}${actionButton(memory.pinned ? 'unpin' : 'pin', pinLabel, pinDescription)}${actionButton('edit', 'Correct this', 'Update the memory; your original note stays unchanged.')}${actionButton('demote', "That's not me anymore", 'Stops this memory from shaping future answers.', 'quiet-danger')}${actionButton('forget', 'Forget this memory', 'Removes the memory and its history. Source notes remain.', 'danger')}</div><form class="correction-form" id="correction-form" hidden><label for="correction-value">What should Kivi remember instead?</label><textarea id="correction-value" required>${escapeHtml(memory.value)}</textarea><div><button type="button" class="text-button" id="cancel-correction">Cancel</button><button type="submit" class="primary-button">Save correction</button></div></form></section>
+      <details class="history-details"><summary>See memory history <span>${data.history?.length || 0} ${(data.history?.length || 0) === 1 ? 'version' : 'versions'}</span></summary><ol>${history}</ol></details>`;
+  }
+
+  async function openMemory(memoryId) {
+    activeMemoryId = memoryId;
+    openDrawer();
+    detail.innerHTML = '<div class="drawer-loading"><i></i><span>Opening this memory…</span></div>';
+    try {
+      const response = await fetch('/v1/memories/' + encodeURIComponent(memoryId));
+      const data = await response.json();
+      if (!response.ok) throw new Error();
+      renderMemoryDetail(data);
+    } catch (_) { detail.innerHTML = '<div class="drawer-empty"><strong>This memory is no longer available.</strong><p>It may have been forgotten or replaced.</p></div>'; }
+  }
+
+  async function openTranscript(transcriptId) {
+    detail.innerHTML = '<div class="drawer-loading"><i></i><span>Opening your source note…</span></div>';
+    backButton.hidden = false;
+    document.querySelector('#drawer-kicker').textContent = 'Original source';
+    document.querySelector('#memory-drawer-title').textContent = 'What you said';
+    try {
+      const response = await fetch('/v1/inspect/' + encodeURIComponent(transcriptId));
+      const data = await response.json();
+      if (!response.ok) throw new Error();
+      const transcript = data.transcript;
+      const outcome = transcript.outcome === 'all_dropped' ? 'Read, not kept' : transcript.semantic_processing === 'complete' ? 'Processed' : transcript.semantic_processing || 'Saved';
+      detail.innerHTML = `<section class="transcript-card"><div class="transcript-status"><span></span>${escapeHtml(outcome)}</div><time>${escapeHtml(humanDate(transcript.occurred_at || transcript.created_at))}</time><blockquote>${escapeHtml(transcript.formatted_text)}</blockquote>${transcript.raw_asr !== transcript.formatted_text ? `<details><summary>See original wording</summary><p>${escapeHtml(transcript.raw_asr)}</p></details>` : ''}</section><div class="source-explainer"><strong>Why this source is here</strong><p>This is one of your notes behind the memory. Changing the memory never rewrites what you originally said.</p></div>`;
+    } catch (_) { detail.innerHTML = '<div class="drawer-empty"><strong>This source note could not be opened.</strong></div>'; }
+  }
+
+  async function runAction(action, value) {
+    if (!activeMemoryData) return;
+    const payload = {action, expected_version: activeMemoryData.version, idempotency_key: makeKey()};
+    if (value !== undefined) payload.value = value;
+    detail.classList.add('is-busy');
+    try {
+      const response = await fetch('/v1/memories/' + encodeURIComponent(activeMemoryId) + '/actions', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'That change could not be saved.');
+      window.kiviToast(action === 'forget' ? 'Memory forgotten. Your source note remains.' : 'Your memory has been updated.');
+      if (action === 'forget' || action === 'demote') { closeDrawer(); await loadMemories(); return; }
+      await loadMemories();
+      await openMemory(activeMemoryId);
+    } catch (error) { window.kiviToast(error.message || 'That change could not be saved.', 'error'); }
+    finally { detail.classList.remove('is-busy'); }
+  }
+
+  grid.addEventListener('click', event => { const card = event.target.closest('[data-memory-id]'); if (card) openMemory(card.dataset.memoryId); });
+  detail.addEventListener('click', event => {
+    const source = event.target.closest('[data-transcript-id]');
+    if (source) { openTranscript(source.dataset.transcriptId); return; }
+    const action = event.target.closest('[data-action]')?.dataset.action;
+    if (!action) return;
+    if (action === 'edit') { document.querySelector('#correction-form').hidden = false; document.querySelector('#correction-value').focus(); return; }
+    runAction(action);
+  });
+  detail.addEventListener('submit', event => {
+    if (event.target.id !== 'correction-form') return;
+    event.preventDefault();
+    runAction('correct', document.querySelector('#correction-value').value.trim());
+  });
+  detail.addEventListener('click', event => { if (event.target.id === 'cancel-correction') document.querySelector('#correction-form').hidden = true; });
+  backButton.addEventListener('click', () => activeMemoryData && renderMemoryDetail(activeMemoryData));
+  tabs.forEach(tab => tab.addEventListener('click', () => selectTier(tab.dataset.tier)));
+  search.addEventListener('input', renderCards);
+  loadMemories();
+})();
+</script>
+{% endblock %}

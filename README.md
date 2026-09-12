@@ -2,6 +2,26 @@
 
 Kivi is a local, single-user text client for durable work memory. It turns eligible user dictations into typed, inspectable memories and uses them to answer Hey Kivi requests with source provenance. It deliberately does not provide speech recognition, external calendar integration, hosted storage, multiple users, autonomous actions, or a general-purpose assistant.
 
+## View the app
+
+After installing the requirements, start Kivi from the repository root.
+
+bash:
+
+```bash
+export PYTHONPATH=src
+uvicorn kivi.app:app --host 127.0.0.1 --port 8000
+```
+
+PowerShell:
+
+```powershell
+$env:PYTHONPATH='src'
+uvicorn kivi.app:app --host 127.0.0.1 --port 8000
+```
+
+Keep that terminal open, then visit [http://127.0.0.1:8000/](http://127.0.0.1:8000/) in a browser. Use the top navigation to move between **Dictate**, **Hey Kivi**, and **Memory**. The interface loads without Ollama, but Ollama and the configured extraction model must be running for new dictations to become memory; see [RUN.md](RUN.md) for the complete setup and seeded demonstration.
+
 **Submission map**
 
 | Brief item | Where |

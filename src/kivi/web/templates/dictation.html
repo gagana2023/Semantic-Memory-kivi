@@ -1,1 +1,142 @@
-<!doctype html><link rel="stylesheet" href="/static/kivi.css"><title>Kivi — Dictation</title><nav><a href="/">Dictation</a> <a href="/hey">Hey Kivi</a> <a href="/inspect">Inspect</a></nav><h1>Dictation</h1><p>Writes your words, then processes stated entities in the background.</p><form id="d"><label>Raw ASR<textarea name="raw_asr" required></textarea></label><label>Formatted text<textarea name="formatted_text" required></textarea></label><button>Submit dictation</button></form><pre id="out"></pre><script>document.querySelector('#d').onsubmit=async e=>{e.preventDefault();let f=new FormData(e.target),r=await fetch('/v1/dictations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(f))});out.textContent=await r.text()}</script>
+{% extends "base.html" %}
+{% block title %}Dictate — Kivi{% endblock %}
+
+{% block content %}
+<section class="dictation-layout">
+  <div class="dictation-stage">
+    <header class="page-intro">
+      <div class="mode-eyebrow"><span class="mode-number">01</span><span>Dictation mode</span></div>
+      <h1>Say it. Keep <em>your</em> voice.</h1>
+      <p>Kivi writes what you give it. Past projects, preferences, and patterns stay out of the way.</p>
+    </header>
+
+    <form id="dictation-form" class="composer-card">
+      <div class="composer-head">
+        <div>
+          <span class="field-kicker">New dictation</span>
+          <h2>What do you want to say?</h2>
+        </div>
+        <div class="boundary-chip">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 12 2.5 2.5L16 9"/><path d="M12 3.5 19 6v5c0 4.4-2.9 8.1-7 9.5C7.9 19.1 5 15.4 5 11V6l7-2.5Z"/></svg>
+          Memory won't rewrite this
+        </div>
+      </div>
+
+      <label class="sr-only" for="dictation-text">Your dictation</label>
+      <textarea id="dictation-text" name="text" rows="8" required maxlength="4000" placeholder="Type the words you want written…"></textarea>
+
+      <div class="composer-foot">
+        <div class="composer-meta">
+          <span id="character-count">0 characters</span>
+          <button class="text-button" type="button" id="clear-dictation">Clear</button>
+        </div>
+        <button class="primary-button" type="submit">
+          <span>Write this</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-7-4 14-3-6-7-1Z"/></svg>
+        </button>
+      </div>
+    </form>
+
+    <section id="dictation-result" class="result-card" hidden aria-live="polite">
+      <div class="result-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg></div>
+      <div class="result-body">
+        <div class="result-heading-row">
+          <div><span class="field-kicker">Written</span><h2>Your words are ready.</h2></div>
+          <span class="status-badge" id="learning-status">Learning quietly</span>
+        </div>
+        <blockquote id="written-output"></blockquote>
+        <div class="result-actions">
+          <a class="soft-button" href="/memory">See what Kivi remembers</a>
+          <a class="text-link" href="/hey">Ask Kivi about your work <span aria-hidden="true">→</span></a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <aside class="boundary-panel" aria-label="What happens in dictation mode">
+    <div class="boundary-orbit" aria-hidden="true">
+      <span class="orbit-ring ring-one"></span><span class="orbit-ring ring-two"></span>
+      <span class="orbit-core">k</span><span class="orbit-label">your words</span>
+    </div>
+    <div class="boundary-copy">
+      <span class="field-kicker">A clear boundary</span>
+      <h2>Writing first.<br>Understanding later.</h2>
+      <p>Dictation is a promise: Kivi won't bring old context into what you're saying now.</p>
+    </div>
+    <ol class="boundary-steps">
+      <li><span>1</span><div><strong>You write</strong><small>Your wording stays yours.</small></div></li>
+      <li><span>2</span><div><strong>Kivi saves it</strong><small>Without semantic recall.</small></div></li>
+      <li><span>3</span><div><strong>Kivi learns after</strong><small>Only eligible work facts.</small></div></li>
+    </ol>
+    <a class="mode-switch-card" href="/hey">
+      <span class="switch-orb" aria-hidden="true"><span></span></span>
+      <span><small>Need your history?</small><strong>Switch to Hey Kivi</strong></span>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+    </a>
+  </aside>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+  const form = document.querySelector('#dictation-form');
+  const input = document.querySelector('#dictation-text');
+  const count = document.querySelector('#character-count');
+  const clear = document.querySelector('#clear-dictation');
+  const result = document.querySelector('#dictation-result');
+  const output = document.querySelector('#written-output');
+  const status = document.querySelector('#learning-status');
+  const submit = form.querySelector('[type="submit"]');
+  const updateCount = () => {
+    const amount = input.value.length;
+    count.textContent = amount + (amount === 1 ? ' character' : ' characters');
+  };
+  input.addEventListener('input', updateCount);
+  clear.addEventListener('click', () => { input.value = ''; updateCount(); input.focus(); });
+
+  async function followJob(jobId) {
+    if (!jobId) return;
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      try {
+        const response = await fetch('/v1/jobs/' + encodeURIComponent(jobId));
+        if (!response.ok) return;
+        const job = await response.json();
+        if (job.state === 'completed') { status.textContent = 'Learning complete'; status.classList.add('is-complete'); return; }
+        if (job.state === 'failed' || job.state === 'quarantined') { status.textContent = 'Saved · learning paused'; return; }
+      } catch (_) { return; }
+    }
+    status.textContent = 'Saved · learning continues';
+  }
+
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    const text = input.value.trim();
+    if (!text) return;
+    submit.disabled = true;
+    submit.classList.add('is-loading');
+    status.textContent = 'Learning quietly';
+    status.classList.remove('is-complete');
+    try {
+      const response = await fetch('/v1/dictations', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({raw_asr: text, formatted_text: text})
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'Kivi could not save this dictation.');
+      output.textContent = data.written_response;
+      result.hidden = false;
+      requestAnimationFrame(() => result.classList.add('is-visible'));
+      result.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+      followJob(data.job_id);
+    } catch (error) {
+      window.kiviToast(error.message || 'Something went wrong. Your text is still here.', 'error');
+    } finally {
+      submit.disabled = false;
+      submit.classList.remove('is-loading');
+    }
+  });
+})();
+</script>
+{% endblock %}

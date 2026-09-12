@@ -1,1 +1,275 @@
-<!doctype html><link rel="stylesheet" href="/static/kivi.css"><title>Kivi — Hey Kivi</title><nav><a href="/">Dictation</a> <a href="/hey">Hey Kivi</a> <a href="/inspect">Inspect</a></nav><h1>Hey Kivi</h1><p>Permission-aware recall, drafting, and internal scheduling. Unimplemented retrieval legs abstain visibly.</p><form id="h"><textarea name="text" required></textarea><button>Send</button></form><pre id="out"></pre><script>document.querySelector('#h').onsubmit=async e=>{e.preventDefault();let r=await fetch('/v1/hey-kivi',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:new FormData(e.target).get('text')})});out.textContent=await r.text()}</script>
+{% extends "base.html" %}
+{% block title %}Hey Kivi — Ask your memory{% endblock %}
+
+{% block content %}
+<section class="hey-shell">
+  <div class="conversation-panel">
+    <header class="conversation-head">
+      <div>
+        <div class="mode-eyebrow"><span class="mode-number">02</span><span>Hey Kivi mode</span></div>
+        <h1>Ask your work <em>memory.</em></h1>
+        <p>Kivi can recall, draft, or plan with what you've told it—and show its sources.</p>
+      </div>
+      <div class="memory-active-badge">
+        <span class="memory-spark" aria-hidden="true"></span>
+        <span><small>Semantic memory</small><strong>Available here</strong></span>
+      </div>
+    </header>
+
+    <div class="conversation-scroll" id="conversation" aria-live="polite">
+      <article class="message kivi-message welcome-message">
+        <div class="kivi-avatar" aria-hidden="true"><span>k</span></div>
+        <div class="message-content">
+          <span class="message-name">Kivi</span>
+          <p>What can I help you remember or prepare?</p>
+          <p class="message-note">I'll use only grounded work memory—and say when I don't know.</p>
+        </div>
+      </article>
+
+      <div class="prompt-starters" id="prompt-starters">
+        <button type="button" data-prompt="Who is the Atlas technical lead?">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M12 16v.01M10.5 9a1.8 1.8 0 1 1 2.2 1.75c-.7.2-.7.75-.7 1.25"/></svg>
+          <span><small>Recall</small>Who leads Atlas?</span>
+        </button>
+        <button type="button" data-prompt="Draft a reply to Arun confirming the Atlas review slot.">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/></svg>
+          <span><small>Draft</small>Prepare a reply</span>
+        </button>
+        <button type="button" data-prompt="What do you think I keep changing about the Atlas review?">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a7 7 0 0 0-4 12.7V19h8v-3.3A7 7 0 0 0 12 3Z"/><path d="M9.5 22h5M9 10c.7-1.4 1.7-2.1 3-2.1"/></svg>
+          <span><small>Invite a thought</small>Ask what Kivi noticed</span>
+        </button>
+      </div>
+    </div>
+
+    <form id="hey-form" class="ask-composer">
+      <label class="sr-only" for="hey-input">Ask Kivi</label>
+      <textarea id="hey-input" rows="1" required maxlength="2000" placeholder="Ask about your work…"></textarea>
+      <div class="ask-composer-foot">
+        <span id="mode-promise"><i></i> Using only things you told Kivi</span>
+        <button class="send-button" type="submit" aria-label="Send to Kivi">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-7-4 14-3-6-7-1Z"/></svg>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <aside class="calibration-panel">
+    <div class="calibration-head">
+      <span class="field-kicker">How Kivi should help</span>
+      <h2>Set the comfort level.</h2>
+      <p>This changes what Kivi can say—not what it keeps.</p>
+    </div>
+
+    <div class="permission-switch" role="radiogroup" aria-label="Kivi's response style">
+      <button type="button" role="radio" aria-checked="true" data-mode="anbu">
+        <span class="permission-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 19 6v5c0 4.4-2.9 8.1-7 9.5C7.9 19.1 5 15.4 5 11V6l7-2.5Z"/><path d="m8.5 12 2.2 2.2 4.8-5"/></svg>
+        </span>
+        <span><strong>Anbu</strong><small>Assist with what I said</small></span>
+        <span class="radio-dot" aria-hidden="true"></span>
+      </button>
+      <button type="button" role="radio" aria-checked="false" data-mode="koottu">
+        <span class="permission-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 12a4 4 0 1 1 8 0v6H8v-6Z"/><path d="M12 3v3M4.2 7.5l2.6 1.4M19.8 7.5l-2.6 1.4M5 18h14"/></svg>
+        </span>
+        <span><strong>Koottu</strong><small>Also mention patterns</small></span>
+        <span class="radio-dot" aria-hidden="true"></span>
+      </button>
+    </div>
+
+    <div class="permission-explainer" id="permission-explainer">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z"/><path d="M12 11v5M12 8v.01"/></svg>
+      <p><strong>Anbu is the default.</strong> Kivi answers from facts you stated and quietly holds back observations.</p>
+    </div>
+
+    <div class="boundary-mini">
+      <span class="mini-orb" aria-hidden="true">k</span>
+      <div><strong>This is different from dictation.</strong><p>Here, memory is invited into the conversation.</p></div>
+      <a href="/">See the boundary <span aria-hidden="true">→</span></a>
+    </div>
+  </aside>
+</section>
+
+<div class="drawer-backdrop" id="why-backdrop" hidden></div>
+<aside class="detail-drawer why-drawer" id="why-drawer" aria-labelledby="why-title" aria-hidden="true">
+  <header class="drawer-head">
+    <div><span class="field-kicker">Behind the answer</span><h2 id="why-title">Why Kivi said this</h2></div>
+    <button class="icon-button" type="button" id="close-why" aria-label="Close explanation"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </header>
+  <div class="drawer-body" id="why-content"></div>
+</aside>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+  const form = document.querySelector('#hey-form');
+  const input = document.querySelector('#hey-input');
+  const conversation = document.querySelector('#conversation');
+  const starters = document.querySelector('#prompt-starters');
+  const send = form.querySelector('.send-button');
+  const permissionButtons = [...document.querySelectorAll('[data-mode]')];
+  const modePromise = document.querySelector('#mode-promise');
+  const explainer = document.querySelector('#permission-explainer p');
+  const drawer = document.querySelector('#why-drawer');
+  const backdrop = document.querySelector('#why-backdrop');
+  const whyContent = document.querySelector('#why-content');
+  let currentMode = 'anbu';
+
+  const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+  const makeKey = () => globalThis.crypto?.randomUUID?.() || ('kivi-' + Date.now() + '-' + Math.random().toString(16).slice(2));
+  const scrollConversation = () => conversation.scrollTo({top: conversation.scrollHeight, behavior: 'smooth'});
+
+  function sizeInput() {
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 150) + 'px';
+  }
+  input.addEventListener('input', sizeInput);
+  input.addEventListener('keydown', event => {
+    if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); form.requestSubmit(); }
+  });
+
+  function setMode(mode) {
+    currentMode = mode;
+    permissionButtons.forEach(button => button.setAttribute('aria-checked', String(button.dataset.mode === mode)));
+    const koottu = mode === 'koottu';
+    modePromise.innerHTML = '<i></i> ' + (koottu ? 'Including patterns Kivi has noticed' : 'Using only things you told Kivi');
+    explainer.innerHTML = koottu
+      ? '<strong>Koottu can gently point out patterns.</strong> Kivi labels observations clearly and never treats them as facts.'
+      : '<strong>Anbu is the default.</strong> Kivi answers from facts you stated and quietly holds back observations.';
+  }
+
+  async function loadPermission() {
+    try {
+      const response = await fetch('/v1/permissions');
+      if (response.ok) setMode((await response.json()).mode);
+    } catch (_) {}
+  }
+
+  permissionButtons.forEach(button => button.addEventListener('click', async () => {
+    const next = button.dataset.mode;
+    if (next === currentMode) return;
+    const previous = currentMode;
+    setMode(next);
+    try {
+      const response = await fetch('/v1/permissions', {method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({mode: next})});
+      if (!response.ok) throw new Error();
+      window.kiviToast(next === 'koottu' ? 'Koottu is on. Kivi may mention observed patterns.' : 'Anbu is on. Kivi will use stated facts only.');
+    } catch (_) { setMode(previous); window.kiviToast('That setting could not be changed.', 'error'); }
+  }));
+
+  starters.addEventListener('click', event => {
+    const button = event.target.closest('[data-prompt]');
+    if (!button) return;
+    input.value = button.dataset.prompt;
+    sizeInput();
+    input.focus();
+  });
+
+  function addUserMessage(text) {
+    conversation.insertAdjacentHTML('beforeend', `<article class="message user-message"><div class="message-content"><span class="message-name">You</span><p>${escapeHtml(text)}</p></div></article>`);
+  }
+
+  function addThinking() {
+    const article = document.createElement('article');
+    article.className = 'message kivi-message thinking-message';
+    article.id = 'thinking-message';
+    article.innerHTML = '<div class="kivi-avatar" aria-hidden="true"><span>k</span></div><div class="thinking-dots" aria-label="Kivi is thinking"><i></i><i></i><i></i></div>';
+    conversation.appendChild(article);
+  }
+
+  function answerCopy(data) {
+    if (data.status === 'unsupported') return ['I can’t search the live web. I can help with the work you’ve shared with me here.'];
+    if (data.status === 'abstained') {
+      if (data.reason === 'MISSING_TIME_OR_GROUNDED_EVENT') return ['I’m missing a clear time or a work event I can verify. Add an exact date and time, and I’ll try again.'];
+      return data.answer?.length ? data.answer : ["I don’t have a grounded memory for that yet."];
+    }
+    if (data.draft) return [data.draft || 'I found context, but not enough stated detail to make a grounded draft.'];
+    if (data.event_id) return ['Done — I added that to Kivi’s internal schedule. Nothing was sent to an external calendar.'];
+    return data.answer?.length ? data.answer : ['Done.'];
+  }
+
+  function addKiviMessage(data) {
+    document.querySelector('#thinking-message')?.remove();
+    const parts = answerCopy(data);
+    const article = document.createElement('article');
+    article.className = 'message kivi-message answer-message ' + (data.status === 'abstained' ? 'is-abstention' : '');
+    const body = parts.map(part => `<p>${escapeHtml(part)}</p>`).join('');
+    const sources = (data.citations || []).map((citation, index) => `<a class="source-chip" href="/memory?open=${encodeURIComponent(citation.memory_id)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z"/><path d="M8 16h11M9 8h6M9 11h4"/></svg>Source ${index + 1}</a>`).join('');
+    const noticed = data.withheld_observations > 0 && currentMode === 'anbu'
+      ? '<div class="noticed-nudge"><span></span><p><strong>Kivi noticed something here.</strong> Switch to Koottu if you want patterns included in future answers.</p></div>' : '';
+    const why = data.trace_id ? `<button class="why-button" type="button" data-trace="${escapeHtml(data.trace_id)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z"/><path d="M12 11v5M12 8v.01"/></svg>Why this answer?</button>` : '';
+    article.innerHTML = `<div class="kivi-avatar" aria-hidden="true"><span>k</span></div><div class="message-content"><span class="message-name">Kivi</span>${body}${noticed}<div class="answer-evidence">${sources}${why}</div></div>`;
+    conversation.appendChild(article);
+    scrollConversation();
+  }
+
+  function closeWhy() {
+    drawer.setAttribute('aria-hidden', 'true');
+    backdrop.hidden = true;
+  }
+  document.querySelector('#close-why').addEventListener('click', closeWhy);
+  backdrop.addEventListener('click', closeWhy);
+  document.addEventListener('keydown', event => { if (event.key === 'Escape') closeWhy(); });
+
+  async function openWhy(traceId) {
+    backdrop.hidden = false;
+    drawer.setAttribute('aria-hidden', 'false');
+    whyContent.innerHTML = '<div class="drawer-loading"><i></i><span>Following the memory trail…</span></div>';
+    try {
+      const response = await fetch('/v1/why/' + encodeURIComponent(traceId));
+      const data = await response.json();
+      if (!response.ok) throw new Error();
+      const candidates = data.candidates || [];
+      const stages = data.stages || [];
+      const used = stages.filter(stage => stage.stage === 'disclosure' && stage.outcome === 'used').length;
+      const withheld = stages.filter(stage => stage.stage === 'disclosure' && stage.outcome === 'withheld').length;
+      const resultText = candidates.length ? `${candidates.length} possible ${candidates.length === 1 ? 'memory' : 'memories'} found` : 'No matching memory found';
+      whyContent.innerHTML = `
+        <div class="why-summary"><span class="why-orb"><i></i></span><div><strong>${escapeHtml(resultText)}</strong><p>Kivi searched before applying your comfort setting.</p></div></div>
+        <ol class="why-steps">
+          <li class="is-done"><span>1</span><div><strong>Searched your work memory</strong><p>${escapeHtml(resultText)}.</p></div></li>
+          <li class="is-done"><span>2</span><div><strong>Checked what truly supports the request</strong><p>${used ? used + ' grounded ' + (used === 1 ? 'memory was' : 'memories were') + ' used.' : 'No memory was strong enough to use.'}</p></div></li>
+          <li class="${withheld ? 'is-held' : 'is-done'}"><span>3</span><div><strong>Applied your ${currentMode === 'koottu' ? 'Koottu' : 'Anbu'} setting</strong><p>${withheld ? withheld + ' ' + (withheld === 1 ? 'item was' : 'items were') + ' kept out of the answer.' : 'Nothing relevant was held back.'}</p></div></li>
+        </ol>
+        <div class="why-principle"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 12 2.5 2.5L16 9"/><path d="M12 3.5 19 6v5c0 4.4-2.9 8.1-7 9.5C7.9 19.1 5 15.4 5 11V6l7-2.5Z"/></svg><p><strong>No plausible guesses.</strong> If Kivi can’t connect an answer to something you provided, it stops.</p></div>`;
+    } catch (_) {
+      whyContent.innerHTML = '<div class="drawer-empty"><strong>This explanation isn’t available right now.</strong><p>The answer itself has not changed.</p></div>';
+    }
+  }
+
+  conversation.addEventListener('click', event => {
+    const button = event.target.closest('[data-trace]');
+    if (button) openWhy(button.dataset.trace);
+  });
+
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    const text = input.value.trim();
+    if (!text || send.disabled) return;
+    addUserMessage(text);
+    starters.hidden = true;
+    input.value = '';
+    sizeInput();
+    send.disabled = true;
+    addThinking();
+    scrollConversation();
+    try {
+      const response = await fetch('/v1/hey-kivi', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({text, idempotency_key: makeKey()})
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'Kivi could not answer that.');
+      addKiviMessage(data);
+    } catch (error) {
+      document.querySelector('#thinking-message')?.remove();
+      addKiviMessage({status: 'abstained', answer: [error.message || 'Something went wrong. Please try again.']});
+    } finally { send.disabled = false; input.focus(); }
+  });
+
+  loadPermission();
+})();
+</script>
+{% endblock %}

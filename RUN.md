@@ -129,13 +129,13 @@ Every later terminal that runs `python -m kivi …` needs the same two environme
 
 ## 6. Interface to open
 
-`http://127.0.0.1:8000/` — three server-rendered pages:
+Keep the Kivi server terminal from step 5 running, then open [http://127.0.0.1:8000/](http://127.0.0.1:8000/) in a browser. The top navigation exposes three server-rendered, normal-user surfaces:
 
-- `/` Dictation
-- `/hey` Hey Kivi
-- `/inspect` Inspect
+- `/` Dictate — writes the person's words without semantic recall, then learns eligible work facts afterward
+- `/hey` Hey Kivi — grounded recall, drafting, internal scheduling, Anbu/Koottu control, and a plain-language Why drawer
+- `/memory` Memory — the three human memory tiers, source notes, history, pinning, correction, demotion, and forgetting
 
-The JSON API under `/v1/` is the authoritative view; the pages call it.
+`/inspect` remains an alias for `/memory` so old review links still work. The JSON API under `/v1/` is the authoritative view; the surfaces call it.
 
 ## 7. Primary interactions to try
 

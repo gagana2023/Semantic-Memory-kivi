@@ -54,7 +54,10 @@ def create_app(settings=None, extractor=None):
         finally: db.close()
         sweep_lifecycle(settings); lower=item.text.lower(); mode=permission(settings); invite_daari=any(x in lower for x in ('why ','insight','think i keep'))
         if any(x in lower for x in ('web search','live web','google ')):
-            return {'mode':'hey_kivi','transcript_id':transcript_id,'selected_tool':None,'status':'unsupported','reason':'UNSUPPORTED_TOOL','answer':[],'citations':[]}
+            trace_id=ident('trace'); db=connect(settings)
+            try: trace(db,trace_id,transcript_id,None,'routing','unsupported',{'reason':'UNSUPPORTED_TOOL'},now()); db.commit()
+            finally: db.close()
+            return {'mode':'hey_kivi','transcript_id':transcript_id,'selected_tool':None,'status':'unsupported','reason':'UNSUPPORTED_TOOL','answer':[], 'trace_id':trace_id,'citations':[]}
         tool='schedule_reschedule' if any(x in lower for x in ('schedule','reschedule','move to')) else ('draft_reply' if any(x in lower for x in ('draft','reply','write ')) else 'recall_search')
         if tool == 'recall_search':
             return answer_recall(settings,item.text,transcript_id)
@@ -124,7 +127,16 @@ def create_app(settings=None, extractor=None):
     def memories():
         sweep_lifecycle(settings); db=connect(settings)
         try:
-            rows=[dict(x) for x in db.execute("SELECT * FROM memories WHERE status='active' ORDER BY pinned DESC,created_at DESC")]
+            rows=[dict(x) for x in db.execute("""
+                SELECT m.*, COUNT(DISTINCT e.transcript_id) AS evidence_count,
+                       COALESCE(MAX(t.occurred_at), m.created_at) AS last_seen_at
+                FROM memories m
+                LEFT JOIN memory_evidence e ON e.memory_id=m.id
+                LEFT JOIN transcripts t ON t.id=e.transcript_id
+                WHERE m.status='active'
+                GROUP BY m.id
+                ORDER BY m.pinned DESC, last_seen_at DESC, m.created_at DESC
+            """)]
             for row in rows: row['version']=db.execute('SELECT COALESCE(MAX(version),0) FROM memory_versions WHERE memory_id=?',(row['id'],)).fetchone()[0]
             return {'groups':{basis:[x for x in rows if x['basis']==basis] for basis in ('stated','observed','hypothesis')}}
         finally: db.close()
@@ -168,10 +180,12 @@ def create_app(settings=None, extractor=None):
             return current
         except KeyError: raise HTTPException(404,'EVALUATION_NOT_FOUND')
     @app.get('/',response_class=HTMLResponse)
-    def dictation_page(request:Request): return templates.TemplateResponse(request,'dictation.html',{})
+    def dictation_page(request:Request): return templates.TemplateResponse(request,'dictation.html',{'page':'dictation'})
     @app.get('/hey',response_class=HTMLResponse)
-    def hey_page(request:Request): return templates.TemplateResponse(request,'hey.html',{})
+    def hey_page(request:Request): return templates.TemplateResponse(request,'hey.html',{'page':'hey'})
+    @app.get('/memory',response_class=HTMLResponse)
+    def memory_page(request:Request): return templates.TemplateResponse(request,'inspect.html',{'page':'memory'})
     @app.get('/inspect',response_class=HTMLResponse)
-    def inspect_page(request:Request): return templates.TemplateResponse(request,'inspect.html',{})
+    def inspect_page(request:Request): return templates.TemplateResponse(request,'inspect.html',{'page':'memory'})
     return app
 app=create_app()
