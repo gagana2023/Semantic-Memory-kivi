@@ -85,7 +85,7 @@ def create_app(settings=None, extractor=None):
         return {'mode':'hey_kivi','transcript_id':transcript_id,'tool':tool,'selected_tool':tool,'status':'completed','answer':answer,'trace_id':trace_id,'citations':[{'memory_id':x['id'],'transcript_id':x['transcript_id']} for x in used],'withheld_observations':len(withheld),'permission':mode}
     @app.post('/v1/imports',status_code=202)
     async def create_import(payload:ImportIn):
-        import_id=ident('imp'); stamp=now(); db=connect(settings); errors=[]; accepted=[]
+        import_id=ident('imp'); stamp=now(); db=connect(settings); errors=[]; accepted=[]; replayed=[]
         try:
             db.execute('BEGIN IMMEDIATE')
             for i,record in enumerate(payload.records):
@@ -94,16 +94,18 @@ def create_app(settings=None, extractor=None):
                 old=db.execute('SELECT raw_asr,formatted_text FROM transcripts WHERE id=?',(record.transcript_id,)).fetchone()
                 if old:
                     if old['raw_asr']!=record.raw_asr or old['formatted_text']!=record.formatted_text: raise HTTPException(409,'CONTENT_CONFLICT')
+                    replayed.append((i,record))
                     continue
                 accepted.append((i,record))
             db.execute('INSERT INTO imports VALUES (?,?,?,?,?,?,NULL,NULL)',(import_id,'queued',len(payload.records),len(accepted),len(errors),stamp))
             for i,record in accepted:
                 db.execute("INSERT INTO transcripts (id,mode,raw_asr,formatted_text,semantic_processing,created_at,occurred_at,metadata_json) VALUES (?,'dictation',?,?, 'queued',?,?,?)",(record.transcript_id,record.raw_asr,record.formatted_text,stamp,record.occurred_at,__import__('json').dumps(record.metadata,sort_keys=True))); db.execute("INSERT OR REPLACE INTO transcript_fts(transcript_id,formatted_text) VALUES (?,?)",(record.transcript_id,record.formatted_text))
                 db.execute("INSERT INTO jobs (id,transcript_id,kind,state,created_at,import_id) VALUES (?,?,'extract','queued',?,?)",(ident('job'),record.transcript_id,stamp,import_id)); db.execute('INSERT INTO import_records VALUES (?,?,?,?,NULL)',(import_id,record.transcript_id,i,'queued'))
+            for i,record in replayed: db.execute('INSERT INTO import_records VALUES (?,?,?,?,NULL)',(import_id,record.transcript_id,i,'replayed'))
             for e in errors: db.execute('INSERT INTO import_records VALUES (?,?,?,?,?)',(import_id,e['transcript_id'],e['index'],'rejected',e['code']))
             db.commit()
         finally: db.close()
-        asyncio.create_task(drain(settings,extractor)); return {'import_id':import_id,'state':'queued','submitted':len(payload.records),'accepted':len(accepted),'rejected':len(errors),'record_errors':errors,'status_url':'/v1/imports/'+import_id,'created_at':stamp}
+        asyncio.create_task(drain(settings,extractor)); return {'import_id':import_id,'state':'queued','submitted':len(payload.records),'accepted':len(accepted),'replayed':len(replayed),'rejected':len(errors),'record_errors':errors,'status_url':'/v1/imports/'+import_id,'created_at':stamp}
     @app.get('/v1/imports/{import_id}')
     def import_status(import_id:str):
         db=connect(settings)
@@ -111,7 +113,7 @@ def create_app(settings=None, extractor=None):
             imp=db.execute('SELECT * FROM imports WHERE id=?',(import_id,)).fetchone()
             if not imp: raise HTTPException(404,'IMPORT_NOT_FOUND')
             records=[dict(x) for x in db.execute('SELECT * FROM import_records WHERE import_id=? ORDER BY record_index',(import_id,))]; active=sum(x['state'] in ('queued','processing','retrying') for x in records)
-            return {'import_id':import_id,'state':'completed' if not active else 'processing','complete':not active,'counts':{'submitted':imp['submitted'],'processed':sum(x['state']=='processed' for x in records),'quarantined':sum(x['state']=='quarantined' for x in records),'queued':sum(x['state']=='queued' for x in records),'processing':sum(x['state']=='processing' for x in records),'retrying':sum(x['state']=='retrying' for x in records)},'records':records}
+            return {'import_id':import_id,'state':'completed' if not active else 'processing','complete':not active,'counts':{'submitted':imp['submitted'],'accepted':imp['accepted'],'replayed':sum(x['state']=='replayed' for x in records),'rejected':imp['rejected'],'processed':sum(x['state']=='processed' for x in records),'quarantined':sum(x['state']=='quarantined' for x in records),'queued':sum(x['state']=='queued' for x in records),'processing':sum(x['state']=='processing' for x in records),'retrying':sum(x['state']=='retrying' for x in records)},'records':records}
         finally: db.close()
     @app.get('/v1/jobs/{job_id}')
     def job(job_id:str):

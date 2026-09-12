@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from kivi.config import Settings
-from kivi.review import corpus, ollama_models, reset_database, verify_model_lock, write_model_lock
+from kivi.review import corpus, import_corpus, ollama_models, reset_database, verify_model_lock, write_model_lock
 
 
 def test_development_corpus_has_approximately_500_schema_valid_records():
@@ -66,3 +66,23 @@ def test_model_lock_resolves_implicit_latest_tag(tmp_path, monkeypatch):
 
     assert lock == {"models": installed}
     assert verify_model_lock(settings) == {"models": installed, "verified": True}
+
+
+def test_import_corpus_fails_loudly_on_terminal_rejections(tmp_path, monkeypatch):
+    source = tmp_path / "corpus.json"
+    record = {"transcript_id":"x", "raw_asr":"x", "formatted_text":"x", "occurred_at":"2026-01-01T00:00:00Z", "metadata":{"source":"dictation"}}
+    source.write_text(json.dumps({"records":[record]}), encoding="utf-8")
+
+    class Response:
+        def __init__(self, body): self.body = body
+        def raise_for_status(self): pass
+        def json(self): return self.body
+    class Client:
+        def __enter__(self): return self
+        def __exit__(self, *args): pass
+        def post(self, *args, **kwargs): return Response({"status_url":"/status"})
+        def get(self, *args, **kwargs): return Response({"complete":True,"counts":{"submitted":1,"accepted":0,"replayed":0,"rejected":1,"processed":0,"quarantined":0}})
+
+    monkeypatch.setattr("kivi.review.httpx.Client", lambda **kwargs: Client())
+    with pytest.raises(RuntimeError, match="IMPORT_COMPLETED_WITH_FAILURES"):
+        import_corpus(Settings(), str(source))

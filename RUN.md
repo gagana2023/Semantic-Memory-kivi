@@ -101,7 +101,9 @@ python -m kivi import-corpus fixtures/development-500.json *> import-output.txt
 Get-Content import-output.txt
 ```
 
-The command blocks until the import reaches a terminal state (default timeout 300 s; raise with `--timeout-seconds 900` on a slow GPU/CPU â€” 500 records take roughly 3â€“10 minutes), prints one JSON object with per-record states, and exits non-zero on invalid JSON, invalid schema, duplicate transcript IDs, HTTP failure, or timeout. A successful seed shows `"counts": {"processed": 500, "quarantined": 0, â€¦}`. Any `quarantined` record carries an `error_code`; `OLLAMA_EXTRACTION_FAILED` means the configured extraction model is not installed or Ollama is not running.
+The command blocks until the import reaches a terminal state (default timeout 300 s; raise with `--timeout-seconds 900` on a slow GPU/CPU â€” 500 records take roughly 3â€“10 minutes), prints one JSON object with per-record states, and exits non-zero on invalid JSON/schema, an HTTP error, timeout, rejected records, or quarantined records. A successful first import must show `"submitted": 500`, `"accepted": 500`, `"processed": 500`, `"replayed": 0`, `"rejected": 0`, and `"quarantined": 0` in `counts`. Do not proceed to evaluation if those counts do not hold. Any quarantined record carries an `error_code`; `OLLAMA_EXTRACTION_FAILED` means the configured extraction model is not installed or Ollama is not running.
+
+An identical re-import is an idempotent no-op and is now explicit: it shows `"replayed": 500` and `"processed": 0`. That is only healthy when the earlier import was successfully processed. If you expected a fresh import, you are pointing at a database that already contains those transcript IDs; reset it as described in step 11 and import again.
 
 ## 5. Start every required process
 
@@ -273,7 +275,7 @@ A corpus is a JSON object with a single `records` array, exactly the schema of `
 | Field | Rule |
 |---|---|
 | `records` | 1â€“1000 entries per file |
-| `transcript_id` | non-empty; unique across the whole database â€” a duplicate fails the entire import loudly before anything is written |
+| `transcript_id` | non-empty and unique within the file. Against the database, identical content is reported as `replayed`; the same ID with different content fails the whole request with `CONTENT_CONFLICT`. |
 | `raw_asr` | non-empty; the pre-correction text (may equal `formatted_text` if no ASR variant exists) |
 | `formatted_text` | non-empty; the user's authored text â€” the **only** memory evidence |
 | `occurred_at` | RFC 3339 timestamp with offset (`+05:30` in the seed; `Z` accepted); records are processed in this order |
@@ -301,6 +303,16 @@ Get-Content import-output.txt
 ```
 
 Then use the interactions in step 7 against the new records, and `python -m kivi inspect-memory` to see what was admitted.
+
+Before evaluating, verify the final JSON output. For a fresh 500-record corpus it must report all 500 as `processed`, with zero `rejected` and zero `quarantined`. Also verify that memory was actually created:
+
+```powershell
+$env:PYTHONPATH='src'
+$memory = python -m kivi inspect-memory | ConvertFrom-Json
+$memory.memories.Count
+```
+
+A zero count means there is no usable semantic memory to evaluate. Inspect `counts`, then inspect failed records in the import JSON. Reset and retry after fixing Ollama/model availability or corpus validation. Evaluation before successful ingestion is not meaningful.
 
 ### 9.4 Evaluate against it (optional)
 
@@ -349,6 +361,8 @@ Stop the server, then:
 export PYTHONPATH=src KIVI_EXTRACTION_MODEL=qwen3:8b KIVI_DATABASE_PATH=eval.db
 python -m kivi evaluate --corpus fixtures/reviewer-corpus.json --questions fixtures/reviewer-questions.json   --ground-truth GROUND_TRUTH.json --output-dir eval-out-reviewer 2>&1 | tee evaluation-output.txt
 ```
+
+For the checked-in friend corpus, substitute `fixtures/friend-corpus-500.json`, `fixtures/friend-questions.json`, and an output directory such as `friend-eval-out`. This produces that corpus's own score; the committed development score does not apply to it.
 
 The evaluator deletes and rebuilds `KIVI_DATABASE_PATH` from the given corpus, so it never sees the seed unless you pass the seed file.
 

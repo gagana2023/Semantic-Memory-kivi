@@ -23,6 +23,8 @@ def test_ac_fr_04_05_06_07_08_10_12_import_and_safe_drops(tmp_path):
         response=c.post('/v1/imports',json={'records':[record(1),record(2,'excluded'),record(3,'timeout')]})
         assert response.status_code==202; body=response.json(); assert body['accepted']==3
         status=wait(c,body['status_url']); assert status['counts']['processed']==2 and status['counts']['quarantined']==1
+        assert status['counts']['accepted']==3 and status['counts']['rejected']==0 and status['counts']['replayed']==0
         inspect=c.get('/v1/inspect/tr_2').json(); assert inspect['memories']==[]
         again=c.post('/v1/imports',json={'records':[record(1)]}); assert again.status_code==202
+        replay=wait(c,again.json()['status_url']); assert replay['counts']['replayed']==1 and replay['counts']['processed']==0
         conflict=record(1,'changed'); assert c.post('/v1/imports',json={'records':[conflict]}).status_code==409

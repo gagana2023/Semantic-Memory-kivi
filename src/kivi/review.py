@@ -43,6 +43,11 @@ def import_corpus(settings, path: str, timeout_seconds: int = 300) -> dict:
             status.raise_for_status()
             result = status.json()
             if result["complete"]:
+                counts = result["counts"]
+                if counts["rejected"] or counts["quarantined"]:
+                    raise RuntimeError("IMPORT_COMPLETED_WITH_FAILURES:" + json.dumps(counts, sort_keys=True))
+                if counts["processed"] + counts["replayed"] != counts["submitted"]:
+                    raise RuntimeError("IMPORT_INCOMPLETE_COUNTS:" + json.dumps(counts, sort_keys=True))
                 return result
             time.sleep(0.25)
     raise RuntimeError("IMPORT_COMPLETION_TIMEOUT")
