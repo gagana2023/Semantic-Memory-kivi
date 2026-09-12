@@ -26,7 +26,7 @@ Keep that terminal open, then visit [http://127.0.0.1:8000/](http://127.0.0.1:80
 
 | Brief item | Where |
 |---|---|
-| Product positioning statement and vision | [kivi-semantic-memory-position.md](kivi-semantic-memory-position.md) (§3 is the positioning statement; §1–9 the vision) |
+| Product positioning statement and vision | [Product Position](Product%20Position.pdf) and [Product Vision](Product%20Vision.pdf) |
 | Design and specification | [DESIGN.md](DESIGN.md), [SPECIFICATION.md](SPECIFICATION.md), [DECISIONS.md](DECISIONS.md) |
 | Source code | [src/kivi/](src/kivi/) — API, services, storage, worker, evaluation, CLI, templates |
 | Schema and migrations | [migrations/](migrations/) |
@@ -144,7 +144,7 @@ Some failures follow deliberate design boundaries rather than implementation bug
 
 ## AI use
 
-Part One — the product positioning and vision in [kivi-semantic-memory-position.md](kivi-semantic-memory-position.md) — was written by me without generative AI.
+Part One — the [product positioning](Product%20Position.pdf) and [product vision](Product%20Vision.pdf) — was written by me without generative AI.
 
 Generative AI (Claude, through Claude Code) was used, under the design decisions I made and recorded in [DESIGN.md](DESIGN.md) and [DECISIONS.md](DECISIONS.md), for:
 
