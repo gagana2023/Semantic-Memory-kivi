@@ -1,3 +1,7 @@
+import json
+import sys
+
+import pytest
 from fastapi.testclient import TestClient
 from kivi.app import create_app
 from kivi.config import Settings
@@ -39,3 +43,26 @@ def test_complete_runner_emits_full_audit_from_clean_database(tmp_path):
     assert report['summary']['unanswerable']=={'correct_refusals':11,'fabrications':0}
     assert (tmp_path/'results.json').is_file()
     assert '## Failures (full)' in (tmp_path/'summary.md').read_text(encoding='utf-8')
+
+def test_evaluate_cli_prints_completion_signal_and_artifact_paths(tmp_path, monkeypatch, capsys):
+    from kivi import __main__
+    monkeypatch.setattr(__main__, 'run_complete', lambda *args: {'summary': {'passed': 2, 'total': 2}})
+    monkeypatch.setattr(sys, 'argv', ['python -m kivi', 'evaluate', '--output-dir', str(tmp_path)])
+    __main__.main()
+    receipt=json.loads(capsys.readouterr().out)
+    assert receipt == {
+        'status': '✅ Evaluation complete',
+        'passed': 2,
+        'total': 2,
+        'files_created': [str(tmp_path / 'results.json'), str(tmp_path / 'summary.md')],
+    }
+
+def test_evaluate_cli_reports_completed_run_before_failed_exit(tmp_path, monkeypatch, capsys):
+    from kivi import __main__
+    monkeypatch.setattr(__main__, 'run_complete', lambda *args: {'summary': {'passed': 1, 'total': 2}})
+    monkeypatch.setattr(sys, 'argv', ['python -m kivi', 'evaluate', '--output-dir', str(tmp_path)])
+    with pytest.raises(SystemExit, match='1'):
+        __main__.main()
+    receipt=json.loads(capsys.readouterr().out)
+    assert receipt['status'] == '⚠️ Evaluation complete: some checks failed'
+    assert receipt['files_created'] == [str(tmp_path / 'results.json'), str(tmp_path / 'summary.md')]

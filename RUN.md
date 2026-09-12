@@ -230,6 +230,8 @@ Get-Content evaluation-output.txt
 
 `--output-dir` defaults to `.`; the command above writes to `eval-out/` so the committed `results.json` / `summary.md` (the submitted results) are not overwritten. The process exits non-zero whenever any case fails — **it is expected to exit non-zero**: the submitted result is 24/52. Extraction runs at temperature 0 with `KIVI_RANDOM_SEED`; model output is still not guaranteed bit-identical across hardware, so small differences from the committed numbers are possible and are reported, not hidden.
 
+When the run finishes, the CLI prints `✅ Evaluation complete` (or `⚠️ Evaluation complete: some checks failed`) plus the full paths of the `results.json` and `summary.md` artifacts it created.
+
 Unit/integration tests (no Ollama needed; deterministic extractor double):
 
 ```bash

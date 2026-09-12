@@ -27,8 +27,16 @@ def main():
     args = parser.parse_args()
     if args.command == "evaluate":
         settings = Settings(); result=run_complete(settings,args.corpus,args.questions,args.ground_truth,args.output_dir)
-        print(json.dumps({"passed":result["summary"]["passed"],"total":result["summary"]["total"],"results":"results.json","summary":"summary.md"},sort_keys=True))
-        if result["summary"]["passed"] != result["summary"]["total"]: sys.exit(1)
+        passed=result["summary"]["passed"]; total=result["summary"]["total"]
+        output=Path(args.output_dir).resolve()
+        complete=passed == total
+        print(json.dumps({
+            "status":"✅ Evaluation complete" if complete else "⚠️ Evaluation complete: some checks failed",
+            "passed":passed,
+            "total":total,
+            "files_created":[str(output / "results.json"),str(output / "summary.md")],
+        },ensure_ascii=False,sort_keys=True))
+        if not complete: sys.exit(1)
         return
     settings = Settings()
     if args.command == "import-corpus":
