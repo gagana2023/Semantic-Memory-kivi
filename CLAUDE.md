@@ -11,7 +11,7 @@ It deliberately is not speech recognition, a general assistant, a multi-user pla
 - CPython 3.12; FastAPI + Uvicorn (one process/worker); Pydantic strict/discriminated contracts.
 - Server-rendered Jinja2, checked-in CSS, small vanilla JS; no Node build chain or SPA.
 - SQLite WAL through `sqlite3`, explicit repositories and `BEGIN IMMEDIATE`; ordered idempotent SQL migrations, not an ORM/Alembic.
-- SQLite FTS5 for lexical search; local Ollama (`qwen3:8b`, `nomic-embed-text`) via `httpx`; vectors in SQLite, cosine scored in Python.
+- SQLite FTS5 for lexical search; local Ollama (`qwen3:8b`, `nomic-embed-text:latest`) via `httpx`; vectors in SQLite, cosine scored in Python.
 - Durable SQLite jobs consumed serially in-process; `pytest` plus checked-in corpus/cases; one-line JSON logging via stdlib logging.
 - Intended layout: `src/kivi/api/`, `web/`, `domain/contracts.py`, `services/`, `storage/`, `evaluation/`, `worker.py`; `migrations/`, `config/`, `fixtures/`, `tests/`.
 
@@ -25,7 +25,7 @@ It deliberately is not speech recognition, a general assistant, a multi-user pla
 - Plain idempotent SQL migrations — reject Alembic/ORM indirection.
 - FTS5 plus bounded local vector scan — reject Elasticsearch/OpenSearch, LIKE scans, and native vector extensions.
 - Direct Ollama REST with pinned model digests — reject SDK wrappers, mutable tags, and committed model weights.
-- Local `qwen3:8b` plus `nomic-embed-text` — reject hosted inference and per-stage model sprawl.
+- Local `qwen3:8b` plus `nomic-embed-text:latest` — reject hosted inference and per-stage model sprawl.
 - Only user dictations, user-authored Hey Kivi turns, and explicit actions are memory evidence — reject app context, Kivi output, and tool results as evidence.
 - Memory types are only entity, preference, and time-bearing episode — reject summaries and untyped fallback memory.
 - Admission gates run exclusion, third-party/work eligibility, typability, completeness, suppression — reject user overrides and fail-open ambiguity.

@@ -19,7 +19,7 @@ Everything below is the single supported path. Commands are given for **bash** (
 Models used (pulled in step 3, not committed):
 
 - `qwen2.5:7b-instruct` — extraction model. **The checked-in `results.json` / `summary.md` were produced with this model**; use it to reproduce them.
-- `nomic-embed-text` — declared embedding model. It is verified by the model lock but the embedding retrieval leg is not active in this build (see README "Limitations"); retrieval is FTS5/entity based.
+- `nomic-embed-text:latest` — declared embedding model. It is verified by the model lock but the embedding retrieval leg is not active in this build (see README "Limitations"); retrieval is FTS5/entity based. The tag is explicit because `ollama list` reports the installed model under this canonical name.
 
 The design document names `qwen3:8b` as the intended extraction model. It is *not* the primary path because the checked-in results were not produced with it; to try it, pull it and set `KIVI_EXTRACTION_MODEL=qwen3:8b`.
 
@@ -33,7 +33,7 @@ All variables are optional; the defaults are shown. `.env.example` lists the sam
 | `KIVI_DATABASE_PATH` | `kivi.db` | SQLite file path (WAL sidecars `-wal`/`-shm` sit beside it) |
 | `KIVI_OLLAMA_URL` | `http://127.0.0.1:11434` | Ollama base URL |
 | `KIVI_EXTRACTION_MODEL` | `qwen3:8b` | Ollama model used for extraction. **Set to `qwen2.5:7b-instruct` for the primary path.** |
-| `KIVI_EMBEDDING_MODEL` | `nomic-embed-text` | declared embedding model (lock-verified; leg inactive) |
+| `KIVI_EMBEDDING_MODEL` | `nomic-embed-text:latest` | declared embedding model (lock-verified; leg inactive) |
 | `KIVI_REVIEW_URL` | `http://127.0.0.1:8000` | server URL used by the `import-corpus` CLI |
 | `KIVI_RANDOM_SEED` | `7` | seed passed to Ollama for deterministic extraction |
 
@@ -49,7 +49,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 ollama pull qwen2.5:7b-instruct
-ollama pull nomic-embed-text
+ollama pull nomic-embed-text:latest
 ollama list
 ```
 
@@ -61,7 +61,7 @@ py -3.12 -m venv .venv
 pip install -r requirements.txt
 
 ollama pull qwen2.5:7b-instruct
-ollama pull nomic-embed-text
+ollama pull nomic-embed-text:latest
 ollama list
 ```
 

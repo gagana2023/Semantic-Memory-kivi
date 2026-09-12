@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from kivi.config import Settings
-from kivi.review import corpus, reset_database
+from kivi.review import corpus, ollama_models, reset_database, verify_model_lock, write_model_lock
 
 
 def test_development_corpus_has_approximately_500_schema_valid_records():
@@ -33,3 +33,36 @@ def test_reset_is_operator_only_and_removes_database_and_generated_reports(tmp_p
     assert result["code"] == "RESET_COMPLETED"
     assert not database.exists()
     assert not (tmp_path / "evaluation-report.json").exists()
+
+
+def test_ollama_models_uses_model_id_not_size(monkeypatch):
+    class Result:
+        stdout = (
+            "NAME                       ID              SIZE      MODIFIED\n"
+            "qwen2.5:7b-instruct        845dbda0ea48    4.7 GB    2 days ago\n"
+            "nomic-embed-text:latest    0a109f422b47    274 MB    2 days ago\n"
+        )
+
+    monkeypatch.setattr("kivi.review.subprocess.run", lambda *args, **kwargs: Result())
+    assert ollama_models() == {
+        "qwen2.5:7b-instruct": "845dbda0ea48",
+        "nomic-embed-text:latest": "0a109f422b47",
+    }
+
+
+def test_model_lock_resolves_implicit_latest_tag(tmp_path, monkeypatch):
+    installed = {
+        "qwen2.5:7b-instruct": "845dbda0ea48",
+        "nomic-embed-text:latest": "0a109f422b47",
+    }
+    settings = Settings(
+        extraction_model="qwen2.5:7b-instruct",
+        embedding_model="nomic-embed-text",
+    )
+    monkeypatch.setattr("kivi.review.ROOT", tmp_path)
+    monkeypatch.setattr("kivi.review.ollama_models", lambda: installed)
+
+    lock = write_model_lock(settings)
+
+    assert lock == {"models": installed}
+    assert verify_model_lock(settings) == {"models": installed, "verified": True}

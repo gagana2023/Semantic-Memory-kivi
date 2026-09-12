@@ -66,16 +66,30 @@ def reset_database(settings) -> dict:
 def ollama_models() -> dict:
     result = subprocess.run(["ollama", "list"], check=True, capture_output=True, text=True)
     lines = [line.split() for line in result.stdout.splitlines()[1:] if line.strip()]
-    return {line[0]: line[2] for line in lines if len(line) >= 3}
+    # `ollama list` columns begin with NAME and ID. Size follows ID and may
+    # itself span two fields (for example, "274 MB").
+    return {line[0]: line[1] for line in lines if len(line) >= 2}
+
+
+def _installed_model_name(requested: str, installed: dict) -> str | None:
+    """Resolve Ollama's implicit `latest` tag to its listed canonical name."""
+    if requested in installed:
+        return requested
+    if ":" not in requested.rsplit("/", 1)[-1]:
+        canonical = f"{requested}:latest"
+        if canonical in installed:
+            return canonical
+    return None
 
 
 def write_model_lock(settings) -> dict:
     installed = ollama_models()
     wanted = (settings.extraction_model, settings.embedding_model)
-    missing = [model for model in wanted if model not in installed]
+    resolved = {model: _installed_model_name(model, installed) for model in wanted}
+    missing = [model for model, installed_name in resolved.items() if installed_name is None]
     if missing:
         raise RuntimeError("MODEL_NOT_INSTALLED:" + ",".join(missing))
-    lock = {"models": {model: installed[model] for model in wanted}}
+    lock = {"models": {installed_name: installed[installed_name] for installed_name in resolved.values()}}
     path = ROOT / "config" / "model-locks.json"
     path.parent.mkdir(exist_ok=True)
     path.write_text(json.dumps(lock, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -90,7 +104,12 @@ def verify_model_lock(settings) -> dict:
     if not isinstance(locked, dict):
         raise RuntimeError("MODEL_LOCK_INVALID")
     installed = ollama_models()
-    mismatches = {model: {"expected": digest, "actual": installed.get(model)} for model, digest in locked.items() if installed.get(model) != digest}
+    mismatches = {}
+    for model, digest in locked.items():
+        installed_name = _installed_model_name(model, installed)
+        actual = installed.get(installed_name) if installed_name else None
+        if actual != digest:
+            mismatches[model] = {"expected": digest, "actual": actual}
     if mismatches:
         raise RuntimeError("MODEL_DIGEST_MISMATCH:" + json.dumps(mismatches, sort_keys=True))
     return {"models": locked, "verified": True}
