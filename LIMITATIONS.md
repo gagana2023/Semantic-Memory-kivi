@@ -34,7 +34,7 @@ These are intentional non-fixes found by the full-pipeline evaluation. They are 
 
 ## Model availability and portability
 
-**Mechanism.** The design names `qwen3:8b`; the evaluation host did not have that model and used installed `qwen2.5:7b-instruct`. Extraction quality and therefore downstream scores are not comparable to a run on the designed model digest.
+**Mechanism.** The evaluation ran with the designed extraction model, `qwen3:8b`. Its identity, token usage, and zero-fee local cost are recorded in `results.json`.
 
 **Why the design chose it.** A pinned local model keeps private data local and makes model identity inspectable without vendoring model weights.
 

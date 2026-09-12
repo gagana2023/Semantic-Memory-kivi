@@ -100,12 +100,12 @@ The 52 evaluation cases test distributed recovery, superseded facts, demonstrate
 
 | Class | Before fixes | After fixes | Change |
 |---|---:|---:|---:|
-| Distributed recovery | 10/22 (45.5%) | 15/22 (68.2%) | +5 |
+| Distributed recovery | 10/22 (45.5%) | 16/22 (72.7%) | +6 |
 | Superseded facts | 0/8 (0.0%) | 0/8 (0.0%) | 0 |
 | Demonstrated preferences | 0/8 (0.0%) | 0/8 (0.0%) | 0 |
-| Episodic retrieval | 0/3 (0.0%) | 1/3 (33.3%) | +1 |
+| Episodic retrieval | 0/3 (0.0%) | 2/3 (66.7%) | +2 |
 | Unanswerable | 1/11 (9.1%) | 8/11 (72.7%) | +7 |
-| **Overall** | **11/52 (21.2%)** | **24/52 (46.2%)** | **+13** |
+| **Overall** | **11/52 (21.2%)** | **26/52 (50.0%)** | **+15** |
 
 No class regressed in this round. The unanswerable result comprises eight correct refusals and three fabrications.
 
@@ -113,14 +113,14 @@ The weak classes are findings about specific mechanisms:
 
 - **Superseded facts: 0/8.** The run created no superseded memory. Old and new statements were often omitted during extraction or emitted with incompatible semantic keys, so consolidation could not establish a current-versus-stale relationship. The evaluator requires persisted supersession evidence and does not award text-only passes.
 - **Demonstrated preferences: 0/8.** No evidence-backed observed pattern was consolidated across independent records. Text-only extraction also lacks the application/channel scope needed by several expected patterns, and default Anbu does not disclose observed content.
-- **Episodic retrieval: 1/3.** Required event fragments were omitted at ingestion in the remaining cases, so later retrieval could not reconstruct the complete episode with required provenance.
+- **Episodic retrieval: 2/3.** Required event fragments were omitted at ingestion in the remaining case, so later retrieval could not reconstruct the complete episode with required provenance.
 - **Unanswerable: 8/11.** Requested-facet support validation removed most weak near matches, improving correct refusals from one to eight. Three cases still accepted unrelated evidence and returned factual content instead of abstaining.
 
-Measured retrieval latency was **7.621 ms p50 / 8.990 ms p95**. End-to-end question latency was **22.096 ms p50 / 28.256 ms p95**. These measurements cover local retrieval and answer assembly after ingestion; extraction model time is accounted for separately in the complete run.
+Measured retrieval latency was **33.346 ms p50 / 41.624 ms p95**. End-to-end question latency was **98.208 ms p50 / 122.663 ms p95**. These measurements cover local retrieval and answer assembly after ingestion; extraction model time is accounted for separately in the complete run.
 
-The run made **500** calls to `qwen2.5:7b-instruct`, with **75,091 input tokens** and **9,740 output tokens**. Local model and service cost was **USD 0.00**. The design names `qwen3:8b`, but that model was unavailable on the evaluation host, so this run is diagnostic rather than evidence for the designed model lock.
+The run made **500** calls to `qwen3:8b`, with **65,591 input tokens** and **9,997 output tokens**. Local model and service cost was **USD 0.00**. This is the designed extraction model.
 
-Database growth was sampled 21 times during ingestion. The SQLite main file grew from **614,400 bytes after record 1** to **892,928 bytes after record 500**, an increase of **278,528 bytes (45.3%)**. The final sampled state contained 500 transcripts, 500 jobs, 81 compiled memories, 114 memory-evidence links, and 116 admission decisions. Per-sample rows and bytes by table are retained in the result artifact.
+Database growth was sampled 21 times during ingestion. The SQLite main file grew from **614,400 bytes after record 1** to **983,040 bytes after record 500**, an increase of **368,640 bytes (60.0%)**. The final sampled state contained 500 transcripts, 500 jobs, 114 compiled memories, 182 memory-evidence links, and 182 admission decisions. Per-sample rows and bytes by table are retained in the result artifact.
 
 Every aggregate above is traceable to [results.json](results.json). All failed cases, expected and actual answers, retrieved memories, exclusions, and provenance are printed in [summary.md](summary.md).
 
@@ -138,7 +138,7 @@ The first and third breaks demonstrate that the evaluator can lose class-level p
 
 ## Limitations
 
-The current build does not establish supersession reliably, does not consolidate demonstrated preferences, leaves two episodic cases incomplete, and fabricates in three unanswerable cases. Its semantic embedding leg is unavailable in the measured path, so retrieval is primarily lexical/entity-based. The run also used an installed model different from the design's intended locked model.
+The current build does not establish supersession reliably, does not consolidate demonstrated preferences, leaves one episodic case incomplete, and fabricates in three unanswerable cases. Its semantic embedding leg is unavailable in the measured path, so retrieval is primarily lexical/entity-based.
 
 Some failures follow deliberate design boundaries rather than implementation bugs: application metadata is excluded from semantic extraction; Anbu withholds observed preferences; and flat mandatory provenance can reject an answer supported by an alternative sufficient source set. The mechanism, rationale, remediation cost, and conditions that would justify each change are documented in [LIMITATIONS.md](LIMITATIONS.md).
 

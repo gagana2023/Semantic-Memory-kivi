@@ -1,4 +1,4 @@
-# Kivi — RUN.md
+﻿# Kivi â€” RUN.md
 
 ## Primary review method
 
@@ -18,10 +18,10 @@ Everything below is the single supported path. Commands are given for **bash** (
 
 Models used (pulled in step 3, not committed):
 
-- `qwen2.5:7b-instruct` — extraction model. **The checked-in `results.json` / `summary.md` were produced with this model**; use it to reproduce them.
-- `nomic-embed-text:latest` — declared embedding model. It is verified by the model lock but the embedding retrieval leg is not active in this build (see README "Limitations"); retrieval is FTS5/entity based. The tag is explicit because `ollama list` reports the installed model under this canonical name.
+- `qwen3:8b` â€” extraction model. **The checked-in `results.json` / `summary.md` were produced with this model**; use it to reproduce them.
+- `nomic-embed-text:latest` â€” declared embedding model. It is verified by the model lock but the embedding retrieval leg is not active in this build (see README "Limitations"); retrieval is FTS5/entity based. The tag is explicit because `ollama list` reports the installed model under this canonical name.
 
-The design document names `qwen3:8b` as the intended extraction model. It is *not* the primary path because the checked-in results were not produced with it; to try it, pull it and set `KIVI_EXTRACTION_MODEL=qwen3:8b`.
+`qwen3:8b` is the designed and primary extraction model.
 
 ## 2. Environment variables
 
@@ -29,10 +29,10 @@ All variables are optional; the defaults are shown. `.env.example` lists the sam
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `PYTHONPATH` | — | **must be `src`** for every `python -m kivi …`, `uvicorn …`, and `pytest` command |
+| `PYTHONPATH` | â€” | **must be `src`** for every `python -m kivi â€¦`, `uvicorn â€¦`, and `pytest` command |
 | `KIVI_DATABASE_PATH` | `kivi.db` | SQLite file path (WAL sidecars `-wal`/`-shm` sit beside it) |
 | `KIVI_OLLAMA_URL` | `http://127.0.0.1:11434` | Ollama base URL |
-| `KIVI_EXTRACTION_MODEL` | `qwen3:8b` | Ollama model used for extraction. **Set to `qwen2.5:7b-instruct` for the primary path.** |
+| `KIVI_EXTRACTION_MODEL` | `qwen3:8b` | Ollama model used for extraction. |
 | `KIVI_EMBEDDING_MODEL` | `nomic-embed-text:latest` | declared embedding model (lock-verified; leg inactive) |
 | `KIVI_REVIEW_URL` | `http://127.0.0.1:8000` | server URL used by the `import-corpus` CLI |
 | `KIVI_RANDOM_SEED` | `7` | seed passed to Ollama for deterministic extraction |
@@ -48,7 +48,7 @@ python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
-ollama pull qwen2.5:7b-instruct
+ollama pull qwen3:8b
 ollama pull nomic-embed-text:latest
 ollama list
 ```
@@ -60,7 +60,7 @@ py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 
-ollama pull qwen2.5:7b-instruct
+ollama pull qwen3:8b
 ollama pull nomic-embed-text:latest
 ollama list
 ```
@@ -68,20 +68,20 @@ ollama list
 Optional model lock (records the installed digests to `config/model-locks.json`, which is git-ignored and host-local; both commands fail loudly on a missing model or digest mismatch):
 
 ```bash
-export PYTHONPATH=src KIVI_EXTRACTION_MODEL=qwen2.5:7b-instruct
+export PYTHONPATH=src KIVI_EXTRACTION_MODEL=qwen3:8b
 python -m kivi write-model-lock
 python -m kivi verify-model-lock
 ```
 
 ```powershell
-$env:PYTHONPATH='src'; $env:KIVI_EXTRACTION_MODEL='qwen2.5:7b-instruct'
+$env:PYTHONPATH='src'; $env:KIVI_EXTRACTION_MODEL='qwen3:8b'
 python -m kivi write-model-lock
 python -m kivi verify-model-lock
 ```
 
 ## 4. Create, migrate, and seed the database
 
-There is no separate create/migrate command: the server creates the SQLite file and applies `migrations/001…005` idempotently at startup. Seeding is an import through the public import contract and requires the server to be running, so:
+There is no separate create/migrate command: the server creates the SQLite file and applies `migrations/001â€¦005` idempotently at startup. Seeding is an import through the public import contract and requires the server to be running, so:
 
 1. Start the server (step 5).
 2. In a second terminal, import the checked-in seed corpus:
@@ -101,7 +101,7 @@ python -m kivi import-corpus fixtures/development-500.json *> import-output.txt
 Get-Content import-output.txt
 ```
 
-The command blocks until the import reaches a terminal state (default timeout 300 s; raise with `--timeout-seconds 900` on a slow GPU/CPU — 500 records take roughly 3–10 minutes), prints one JSON object with per-record states, and exits non-zero on invalid JSON, invalid schema, duplicate transcript IDs, HTTP failure, or timeout. A successful seed shows `"counts": {"processed": 500, "quarantined": 0, …}`. Any `quarantined` record carries an `error_code`; `OLLAMA_EXTRACTION_FAILED` means the configured extraction model is not installed or Ollama is not running.
+The command blocks until the import reaches a terminal state (default timeout 300 s; raise with `--timeout-seconds 900` on a slow GPU/CPU â€” 500 records take roughly 3â€“10 minutes), prints one JSON object with per-record states, and exits non-zero on invalid JSON, invalid schema, duplicate transcript IDs, HTTP failure, or timeout. A successful seed shows `"counts": {"processed": 500, "quarantined": 0, â€¦}`. Any `quarantined` record carries an `error_code`; `OLLAMA_EXTRACTION_FAILED` means the configured extraction model is not installed or Ollama is not running.
 
 ## 5. Start every required process
 
@@ -112,7 +112,7 @@ bash:
 ```bash
 ollama serve   # skip if Ollama is already running as a service
 
-export PYTHONPATH=src KIVI_EXTRACTION_MODEL=qwen2.5:7b-instruct
+export PYTHONPATH=src KIVI_EXTRACTION_MODEL=qwen3:8b
 uvicorn kivi.app:app --host 127.0.0.1 --port 8000
 ```
 
@@ -121,32 +121,32 @@ PowerShell:
 ```powershell
 ollama serve   # skip if Ollama is already running as a service
 
-$env:PYTHONPATH='src'; $env:KIVI_EXTRACTION_MODEL='qwen2.5:7b-instruct'
+$env:PYTHONPATH='src'; $env:KIVI_EXTRACTION_MODEL='qwen3:8b'
 uvicorn kivi.app:app --host 127.0.0.1 --port 8000
 ```
 
-Every later terminal that runs `python -m kivi …` needs the same two environment variables set.
+Every later terminal that runs `python -m kivi â€¦` needs the same two environment variables set.
 
 ## 6. Interface to open
 
 Keep the Kivi server terminal from step 5 running, then open [http://127.0.0.1:8000/](http://127.0.0.1:8000/) in a browser. The top navigation exposes three server-rendered, normal-user surfaces:
 
-- `/` Dictate — writes the person's words without semantic recall, then learns eligible work facts afterward
-- `/hey` Hey Kivi — grounded recall, drafting, internal scheduling, Anbu/Koottu control, and a plain-language Why drawer
-- `/memory` Memory — the three human memory tiers, source notes, history, pinning, correction, demotion, and forgetting
+- `/` Dictate â€” writes the person's words without semantic recall, then learns eligible work facts afterward
+- `/hey` Hey Kivi â€” grounded recall, drafting, internal scheduling, Anbu/Koottu control, and a plain-language Why drawer
+- `/memory` Memory â€” the three human memory tiers, source notes, history, pinning, correction, demotion, and forgetting
 
 `/inspect` remains an alias for `/memory` so old review links still work. The JSON API under `/v1/` is the authoritative view; the surfaces call it.
 
 ## 7. Primary interactions to try
 
-After seeding (step 4). Bodies are strict — unknown fields are rejected with field-level errors.
+After seeding (step 4). Bodies are strict â€” unknown fields are rejected with field-level errors.
 
 **a. Dictation (write path).** Submit, then poll the job.
 
 ```bash
 curl -s -X POST http://127.0.0.1:8000/v1/dictations -H 'content-type: application/json' \
   -d '{"raw_asr":"the atlas review note is ready","formatted_text":"The Atlas review note is ready."}'
-# → 202 {"transcript_id": "...", "job_id": "..."}
+# â†’ 202 {"transcript_id": "...", "job_id": "..."}
 curl -s http://127.0.0.1:8000/v1/jobs/<job_id>          # until "status": "completed"
 curl -s http://127.0.0.1:8000/v1/inspect/<transcript_id> # transcript, memories, admission decisions
 ```
@@ -164,23 +164,23 @@ The answer carries `citations` (memory IDs + source transcript IDs) and a `trace
 curl -s http://127.0.0.1:8000/v1/why/<trace_id>   # retrieval candidates, support/near-miss decisions, disclosure
 ```
 
-**c. Hey Kivi abstention (history absent).** Ask something the corpus never states; expect `"status": "abstained"`, `"reason": "NO_GROUNDED_MATCH"`, and empty `citations` — not a plausible guess.
+**c. Hey Kivi abstention (history absent).** Ask something the corpus never states; expect `"status": "abstained"`, `"reason": "NO_GROUNDED_MATCH"`, and empty `citations` â€” not a plausible guess.
 
 ```bash
 curl -s -X POST http://127.0.0.1:8000/v1/hey-kivi -H 'content-type: application/json' \
   -d '{"text":"What is the office wifi password?"}'
 ```
 
-(A question that shares an entity name with stored memory — "What is the Atlas budget?" — may instead return the Atlas facts it does have. This is the known "unanswerable" weakness reported in README: 8/11 correct refusals, 3 fabrications.)
+(A question that shares an entity name with stored memory â€” "What is the Atlas budget?" â€” may instead return the Atlas facts it does have. This is the known "unanswerable" weakness reported in README: 8/11 correct refusals, 3 fabrications.)
 
-**d. Draft and internal schedule.** Same endpoint; the tool is chosen by keyword (`draft`/`reply`/`write ` → `draft_reply`; `schedule`/`reschedule`/`move to` → `schedule_reschedule`; otherwise `recall_search`) and reported in `selected_tool`. No external calendar or mail is contacted. A schedule request needs an RFC 3339 UTC time in the text, an `idempotency_key`, and a retrieved `episode` memory; otherwise it abstains with `MISSING_TIME_OR_GROUNDED_EVENT`.
+**d. Draft and internal schedule.** Same endpoint; the tool is chosen by keyword (`draft`/`reply`/`write ` â†’ `draft_reply`; `schedule`/`reschedule`/`move to` â†’ `schedule_reschedule`; otherwise `recall_search`) and reported in `selected_tool`. No external calendar or mail is contacted. A schedule request needs an RFC 3339 UTC time in the text, an `idempotency_key`, and a retrieved `episode` memory; otherwise it abstains with `MISSING_TIME_OR_GROUNDED_EVENT`.
 
 ```bash
 curl -s -X POST http://127.0.0.1:8000/v1/hey-kivi -H 'content-type: application/json' \
   -d '{"text":"Draft a reply to Arun confirming the Atlas review slot."}'
 curl -s -X POST http://127.0.0.1:8000/v1/hey-kivi -H 'content-type: application/json' \
   -d '{"text":"Reschedule the pricing legal review to 2026-06-10T14:00:00Z.","idempotency_key":"sched-1"}'
-# → "status":"completed", "event_id":"evt_…", "external_side_effects":"none"; repeating with the same key returns the same event_id
+# â†’ "status":"completed", "event_id":"evt_â€¦", "external_side_effects":"none"; repeating with the same key returns the same event_id
 ```
 
 **e. Permission dial.** `anbu` (default) discloses stated memory only; `koottu` may also surface observations. Candidate ranking does not change between them.
@@ -205,7 +205,7 @@ After `forget` the memory's status is `suppressed`: `GET /v1/memories/<memory_id
 
 **g. Restart persistence.** Stop the server (Ctrl+C), start it again (step 5), and repeat (b): the same citations return.
 
-The same flows are available in the UI: Dictation page (a), Hey Kivi page (b–e), Inspect page (f, plus the three tier headings and active-memory rows).
+The same flows are available in the UI: Dictation page (a), Hey Kivi page (bâ€“e), Inspect page (f, plus the three tier headings and active-memory rows).
 
 ## 8. Run the candidate evaluation
 
@@ -214,7 +214,7 @@ The evaluator is offline from the server: it **deletes the configured database**
 bash:
 
 ```bash
-export PYTHONPATH=src KIVI_EXTRACTION_MODEL=qwen2.5:7b-instruct KIVI_DATABASE_PATH=eval.db
+export PYTHONPATH=src KIVI_EXTRACTION_MODEL=qwen3:8b KIVI_DATABASE_PATH=eval.db
 python -m kivi evaluate --corpus fixtures/development-500.json --questions EVAL_QUESTIONS.json \
   --ground-truth GROUND_TRUTH.json --output-dir eval-out 2>&1 | tee evaluation-output.txt
 ```
@@ -222,15 +222,15 @@ python -m kivi evaluate --corpus fixtures/development-500.json --questions EVAL_
 PowerShell:
 
 ```powershell
-$env:PYTHONPATH='src'; $env:KIVI_EXTRACTION_MODEL='qwen2.5:7b-instruct'; $env:KIVI_DATABASE_PATH='eval.db'
+$env:PYTHONPATH='src'; $env:KIVI_EXTRACTION_MODEL='qwen3:8b'; $env:KIVI_DATABASE_PATH='eval.db'
 python -m kivi evaluate --corpus fixtures/development-500.json --questions EVAL_QUESTIONS.json `
   --ground-truth GROUND_TRUTH.json --output-dir eval-out *> evaluation-output.txt
 Get-Content evaluation-output.txt
 ```
 
-`--output-dir` defaults to `.`; the command above writes to `eval-out/` so the committed `results.json` / `summary.md` (the submitted results) are not overwritten. The process exits non-zero whenever any case fails — **it is expected to exit non-zero**: the submitted result is 24/52. Extraction runs at temperature 0 with `KIVI_RANDOM_SEED`; model output is still not guaranteed bit-identical across hardware, so small differences from the committed numbers are possible and are reported, not hidden.
+`--output-dir` defaults to `.`; the command above writes to `eval-out/` so the committed `results.json` / `summary.md` (the submitted results) are not overwritten. The process exits non-zero whenever any case fails â€” **it is expected to exit non-zero**: the submitted Qwen 3 result is 26/52. Extraction runs at temperature 0 with `KIVI_RANDOM_SEED`; model output is still not guaranteed bit-identical across hardware, so small differences from the committed numbers are possible and are reported, not hidden.
 
-When the run finishes, the CLI prints `✅ Evaluation complete` (or `⚠️ Evaluation complete: some checks failed`) plus the full paths of the `results.json` and `summary.md` artifacts it created.
+When the run finishes, the CLI prints `âœ… Evaluation complete` (or `âš ï¸ Evaluation complete: some checks failed`) plus the full paths of the `results.json` and `summary.md` artifacts it created.
 
 Unit/integration tests (no Ollama needed; deterministic extractor double):
 
@@ -248,7 +248,7 @@ pytest tests -q *> test-output.txt
 
 ### 9.1 Where to put it
 
-Place the translated corpus anywhere readable; the recommended location is `fixtures/<name>.json` beside the seed corpus (e.g. `fixtures/reviewer-corpus.json`). The import command takes the path explicitly, so no other file has to be edited and no directory is scanned. One file may hold up to 1,000 records; split a larger corpus into `fixtures/<name>-1.json`, `fixtures/<name>-2.json`, … and import them in order.
+Place the translated corpus anywhere readable; the recommended location is `fixtures/<name>.json` beside the seed corpus (e.g. `fixtures/reviewer-corpus.json`). The import command takes the path explicitly, so no other file has to be edited and no directory is scanned. One file may hold up to 1,000 records; split a larger corpus into `fixtures/<name>-1.json`, `fixtures/<name>-2.json`, â€¦ and import them in order.
 
 If the foreign corpus should replace the seed rather than sit alongside it, run the reset (step 11) first; otherwise both corpora coexist in one database and `transcript_id` values must not collide with the seed's `meera_2026_NNNN` IDs.
 
@@ -272,12 +272,12 @@ A corpus is a JSON object with a single `records` array, exactly the schema of `
 
 | Field | Rule |
 |---|---|
-| `records` | 1–1000 entries per file |
-| `transcript_id` | non-empty; unique across the whole database — a duplicate fails the entire import loudly before anything is written |
+| `records` | 1â€“1000 entries per file |
+| `transcript_id` | non-empty; unique across the whole database â€” a duplicate fails the entire import loudly before anything is written |
 | `raw_asr` | non-empty; the pre-correction text (may equal `formatted_text` if no ASR variant exists) |
-| `formatted_text` | non-empty; the user's authored text — the **only** memory evidence |
+| `formatted_text` | non-empty; the user's authored text â€” the **only** memory evidence |
 | `occurred_at` | RFC 3339 timestamp with offset (`+05:30` in the seed; `Z` accepted); records are processed in this order |
-| `metadata` | JSON object with a **required non-empty `source`** string (the seed uses `"dictation"`); other keys are optional — the seed uses `application` (e.g. `slack`, `mail`, `docs`), `language` (`en-IN`), and `channel`. Stored for provenance only; never used as memory evidence. `{}` is rejected with `CORPUS_RECORD_INVALID` |
+| `metadata` | JSON object with a **required non-empty `source`** string (the seed uses `"dictation"`); other keys are optional â€” the seed uses `application` (e.g. `slack`, `mail`, `docs`), `language` (`en-IN`), and `channel`. Stored for provenance only; never used as memory evidence. `{}` is rejected with `CORPUS_RECORD_INVALID` |
 
 Any other field, at any level, is rejected with a field-level error.
 
@@ -336,7 +336,7 @@ The evaluator needs a questions file. Put it beside the corpus, e.g. `fixtures/r
 ```
 
 - `answerability`: `answerable` or `unanswerable`.
-- `capability`: free text; it decides the report class — contains `preference` → demonstrated-preferences; `supersession` / `current-truth` / `historical` / `reversal` → superseded-facts; `episode` / `reconstruction` / `time/app` → episodic-retrieval; anything else → distributed-recovery. `unanswerable` always classes as unanswerable.
+- `capability`: free text; it decides the report class â€” contains `preference` â†’ demonstrated-preferences; `supersession` / `current-truth` / `historical` / `reversal` â†’ superseded-facts; `episode` / `reconstruction` / `time/app` â†’ episodic-retrieval; anything else â†’ distributed-recovery. `unanswerable` always classes as unanswerable.
 - `expected_answer`: the answer text scored by token overlap (answerable cases).
 - `required_provenance`: `transcript_id`s that must all appear in the answer's citations.
 - `tier_2`: leave `"questions": []`. The tier-2 templates in `EVAL_QUESTIONS.json` are bound by ID to the seed corpus's tier-1 cases and only apply to it.
@@ -346,7 +346,7 @@ The evaluator needs a questions file. Put it beside the corpus, e.g. `fixtures/r
 Stop the server, then:
 
 ```bash
-export PYTHONPATH=src KIVI_EXTRACTION_MODEL=qwen2.5:7b-instruct KIVI_DATABASE_PATH=eval.db
+export PYTHONPATH=src KIVI_EXTRACTION_MODEL=qwen3:8b KIVI_DATABASE_PATH=eval.db
 python -m kivi evaluate --corpus fixtures/reviewer-corpus.json --questions fixtures/reviewer-questions.json   --ground-truth GROUND_TRUTH.json --output-dir eval-out-reviewer 2>&1 | tee evaluation-output.txt
 ```
 

@@ -41,6 +41,8 @@ def test_complete_runner_emits_full_audit_from_clean_database(tmp_path):
     assert report['database_growth'][0]['records_processed']==1
     assert report['database_growth'][-1]['records_processed']==500
     assert report['summary']['unanswerable']=={'correct_refusals':11,'fabrications':0}
+    assert all(item['nothing_learned_reason']=='no_candidates' for item in report['ingestion'])
+    assert all('retrieval_candidates' in item for item in report['questions'])
     assert (tmp_path/'results.json').is_file()
     assert '## Failures (full)' in (tmp_path/'summary.md').read_text(encoding='utf-8')
 

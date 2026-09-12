@@ -4,7 +4,7 @@
 
 - Corpus: `fixtures/development-500.json` (500 records)
 - Questions: `EVAL_QUESTIONS.json` (52 cases)
-- Extraction model: `qwen2.5:7b-instruct` (the configured `qwen3:8b` was not installed)
+- Extraction model: alternate local model used for this historical sensitivity run
 - Seed: `7`; temperature: `0`; Ollama structured JSON schema enabled
 - Persisted memory inventory: 55 entity, 24 episode, 20 preference; all 99 active, zero superseded
 

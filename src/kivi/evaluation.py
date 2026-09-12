@@ -150,6 +150,27 @@ def _memory(db, memory_id):
     item['provenance']=[r['transcript_id'] for r in db.execute('SELECT transcript_id FROM memory_evidence WHERE memory_id=? ORDER BY transcript_id',(memory_id,))]
     return item
 
+def _ingestion_events(db, transcript_id):
+    """Return every durable admission/consolidation outcome for one source record."""
+    events=[]
+    for row in db.execute("SELECT memory_id,stage,outcome,detail_json FROM decision_traces WHERE transcript_id=? AND memory_id IS NOT NULL ORDER BY created_at,id",(transcript_id,)):
+        if row['stage'] not in {'extraction','consolidation'}: continue
+        detail=json.loads(row['detail_json'])
+        action='created' if row['stage']=='extraction' and row['outcome']=='admitted' else row['outcome']
+        events.append({'action':action,'reason':detail.get('reason','admitted' if action=='created' else row['outcome']),'memory':_memory(db,row['memory_id'])})
+    for decision in db.execute("SELECT candidate_index,gate,outcome,reason_code FROM admission_decisions WHERE transcript_id=? ORDER BY candidate_index",(transcript_id,)):
+        if decision['outcome'] in {'dropped','duplicate'}:
+            events.append({'action':'rejected' if decision['outcome']=='dropped' else 'merged','candidate_index':decision['candidate_index'],'reason':decision['reason_code'],'memory':None})
+    return events
+
+def _exclusion_reason(db, trace_id, candidate):
+    row=db.execute("SELECT disposition FROM retrieval_candidates WHERE trace_id=? AND memory_id=?",(trace_id,candidate['id'])).fetchone()
+    if row and row['disposition']=='near_miss':
+        detail=db.execute("SELECT detail_json FROM decision_traces WHERE transcript_id IS NULL AND memory_id=? AND stage='support_validation' ORDER BY created_at DESC LIMIT 1",(candidate['id'],)).fetchone()
+        return json.loads(detail['detail_json']).get('missing_facet','missing requested facet') if detail else 'missing requested facet'
+    if candidate['basis']!='stated': return 'withheld by disclosure policy'
+    return 'retrieved but not selected for the grounded answer'
+
 def run_complete(settings, corpus_path='fixtures/development-500.json', questions_path='EVAL_QUESTIONS.json', ground_truth_path='GROUND_TRUTH.json', output_dir='.', extractor=None, sample_every=25):
     """Reset, ingest through the durable worker, query the production Hey path, and emit an audit."""
     from .review import corpus as load_corpus, reset_database
@@ -178,15 +199,11 @@ def run_complete(settings, corpus_path='fixtures/development-500.json', question
     ingestion=[]; db=connect(settings)
     try:
         for record in corpus_data['records']:
-            rid=record['transcript_id']; memories=[]
-            mids={r['id'] for r in db.execute('SELECT id FROM memories WHERE transcript_id=?',(rid,))}|{r['memory_id'] for r in db.execute('SELECT memory_id FROM memory_evidence WHERE transcript_id=?',(rid,))}
-            for mid in sorted(mids):
-                item=_memory(db,mid); decisions=[dict(x) for x in db.execute('SELECT outcome,reason_code,gate FROM admission_decisions WHERE transcript_id=? ORDER BY candidate_index',(rid,))]
-                action='created' if item and item['transcript_id']==rid else 'merged'
-                memories.append({'action':action,'reason':'admitted' if action=='created' else 'EXACT_SEMANTIC_KEY','memory':item})
+            rid=record['transcript_id']; memories=_ingestion_events(db,rid)
             decisions=[dict(x) for x in db.execute('SELECT candidate_index,gate,outcome,reason_code FROM admission_decisions WHERE transcript_id=? ORDER BY candidate_index',(rid,))]
             t=db.execute('SELECT outcome,semantic_processing FROM transcripts WHERE id=?',(rid,)).fetchone()
-            ignored_reason=None if memories else (decisions[0]['reason_code'] if decisions else t['outcome'])
+            learned=any(event['action'] in {'created','merged','updated','superseded'} for event in memories)
+            ignored_reason=None if learned else (decisions[0]['reason_code'] if decisions else t['outcome'])
             ingestion.append({'record_id':rid,'original_input':record,'outcome':t['outcome'],'semantic_processing':t['semantic_processing'],'memory_events':memories,'candidate_decisions':decisions,'nothing_learned_reason':ignored_reason})
     finally: db.close()
     cases=_materialize_cases(questions)
@@ -201,7 +218,7 @@ def run_complete(settings, corpus_path='fixtures/development-500.json', question
                 item=_memory(db,row['memory_id']); item.update({'rank':row['rank'],'legs':json.loads(row['legs_json'])}); candidates.append(item)
             cited_ids={x['memory_id'] for x in response.get('citations',[])}
             retrieved=[x for x in candidates if x['id'] in cited_ids]
-            excluded=[{**x,'exclusion_reason':'withheld by disclosure policy' if x['basis']!='stated' else 'scored but not used'} for x in candidates if x['id'] not in cited_ids]
+            excluded=[{**x,'exclusion_reason':_exclusion_reason(db,trace_id,x)} for x in candidates if x['id'] not in cited_ids]
             provenance=sorted({p for x in retrieved for p in x['provenance']})
             retrieval_ms=response.get('_metrics',{}).get('retrieval_latency_ms',elapsed)
             if tr:
@@ -211,7 +228,7 @@ def run_complete(settings, corpus_path='fixtures/development-500.json', question
             if _question_class(case)=='superseded-facts':
                 has_supersession=bool(placeholders and db.execute("SELECT 1 FROM memories m JOIN memory_evidence e ON e.memory_id=m.id WHERE e.transcript_id IN ("+placeholders+") AND m.status='superseded' LIMIT 1",tuple(case.get('required_provenance') or [])).fetchone())
             passed,reason=_score(case,response,provenance,has_supersession)
-            results.append({'id':case['id'],'class':_question_class(case),'question':case['question'],'expected':case.get('expected_answer') or case.get('expected_behavior'),'actual':response,'abstained':response.get('status')=='abstained','passed':passed,'reason':reason,'retrieved_memories':retrieved,'scored_but_excluded':excluded,'provenance_record_ids':provenance,'retrieval_latency_ms':retrieval_ms,'end_to_end_latency_ms':elapsed,'model_usage':[],'cost_usd':0.0})
+            results.append({'id':case['id'],'class':_question_class(case),'question':case['question'],'expected':case.get('expected_answer') or case.get('expected_behavior'),'actual':response,'abstained':response.get('status')=='abstained','passed':passed,'reason':reason,'retrieval_candidates':candidates,'retrieved_memories':retrieved,'scored_but_excluded':excluded,'provenance_record_ids':provenance,'retrieval_latency_ms':retrieval_ms,'end_to_end_latency_ms':elapsed,'model_usage':[],'cost_usd':0.0})
         finally: db.close()
     usage=list(getattr(extractor,'calls',[])); by_model={}
     for call in usage:

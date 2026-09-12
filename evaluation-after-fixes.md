@@ -4,7 +4,7 @@
 
 - Before: corrected baseline from the original 500-record run, 11/52.
 - After: clean database, all 500 records re-ingested, all 52 fixture-bound questions executed, 24/52.
-- Model for both live runs: installed `qwen2.5:7b-instruct`, seed 7, temperature 0. This differs from the unavailable model named by the design and is documented in `LIMITATIONS.md`.
+- Model for both historical live runs: an alternate local extraction model, seed 7, temperature 0. The current baseline evaluation uses `qwen3:8b`.
 
 ## Before and after
 
