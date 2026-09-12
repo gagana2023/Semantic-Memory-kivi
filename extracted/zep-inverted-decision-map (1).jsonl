@@ -1,0 +1,30 @@
+{"q":"What is the unit of ingestion — the thing that gets processed as one indivisible input?","a":"A single typed message carrying its own reference time.","src":"zep-inverted-decision-map (1)","hard":false}
+{"q":"When the extractor interprets a unit, what surrounding material is it entitled to see?","a":"The previous four messages, providing two complete conversation turns.","src":"zep-inverted-decision-map (1)","hard":false}
+{"q":"Who is a legitimate subject of memory?","a":"Everyone: always the speaker first, plus other significant entities, concepts, or actors mentioned.","src":"zep-inverted-decision-map (1)","hard":false}
+{"q":"After extraction, is the raw input kept?","a":"Yes, permanently in a non-lossy episode subgraph with source-tracing indices.","src":"zep-inverted-decision-map (1)","hard":true}
+{"q":"When does extraction run relative to the interaction?","a":"At ingestion, inline; whether it blocks the response is unspecified.","src":"zep-inverted-decision-map (1)","hard":false}
+{"q":"What shape must a memory take to be storable?","a":"A typed binary relation between two distinct entity nodes; multi-entity facts become repeated pairs.","src":"zep-inverted-decision-map (1)","hard":true}
+{"q":"What does an entity carry besides its name?","a":"An LLM-generated free-text summary regenerated whenever duplicate entities merge.","src":"zep-inverted-decision-map (1)","hard":false}
+{"q":"Is the epistemic status of a stored item represented at all?","a":"No; all semantic items are facts without confidence, evidence count, or source type.","src":"zep-inverted-decision-map (1)","hard":false}
+{"q":"How is time represented?","a":"Bi-temporally, with created and expired transaction times plus valid and invalid event times.","src":"zep-inverted-decision-map (1)","hard":true}
+{"q":"Is the relation vocabulary closed?","a":"No; the LLM generates relation types ad hoc for each fact.","src":"zep-inverted-decision-map (1)","hard":false}
+{"q":"Is there a level of abstraction above individual entities?","a":"Yes; dynamically maintained community nodes carry high-level summaries of strongly connected entity clusters.","src":"zep-inverted-decision-map (1)","hard":false}
+{"q":"When are two mentions the same thing, and when is that decided?","a":"At write time, using hybrid candidate search and LLM resolution, then merging duplicate names and summaries.","src":"zep-inverted-decision-map (1)","hard":true}
+{"q":"What must never be stored, regardless of relevance?","a":"Nothing; there are no content-based exclusions, sensitive categories, or privacy constraints.","src":"zep-inverted-decision-map (1)","hard":false}
+{"q":"What happens to candidates the extractor considered and rejected?","a":"They vanish; no drop log exists, while a reflexion pass increases extraction coverage.","src":"zep-inverted-decision-map (1)","hard":false}
+{"q":"When new information contradicts stored information, what determines which survives?","a":"Recency always wins; the new edge’s valid time becomes the old edge’s invalid time.","src":"zep-inverted-decision-map (1)","hard":true}
+{"q":"How wide a net does contradiction-detection cast?","a":"Only semantically related existing edges between the same entity pair.","src":"zep-inverted-decision-map (1)","hard":false}
+{"q":"Is an invalidated item deleted or retained?","a":"Retained with an invalid timestamp to preserve relationship history.","src":"zep-inverted-decision-map (1)","hard":false}
+{"q":"May the system decline to resolve a contradiction?","a":"No; every detected contradiction is immediately resolved in favor of the newer edge.","src":"zep-inverted-decision-map (1)","hard":false}
+{"q":"What does the retriever return when nothing relevant exists?","a":"The top k results anyway, without a threshold, null return, or relevance floor.","src":"zep-inverted-decision-map (1)","hard":true}
+{"q":"How are candidates found?","a":"Through hybrid embedding cosine search, BM25 full-text search, and breadth-first graph traversal.","src":"zep-inverted-decision-map (1)","hard":false}
+{"q":"What determines rank among retrieved candidates?","a":"A configurable reranker: RRF, MMR, node distance, cross-encoder score, or episode-mention frequency.","src":"zep-inverted-decision-map (1)","hard":false}
+{"q":"What does memory hand to the generator?","a":"A flat text string containing facts with date ranges and entities with summaries.","src":"zep-inverted-decision-map (1)","hard":false}
+{"q":"How much context is returned?","a":"A fixed top-k context, averaging about 1,600 tokens, regardless of query.","src":"zep-inverted-decision-map (1)","hard":true}
+{"q":"Are retrieval and disclosure separable?","a":"No; retrieved content enters the context string and is available to the answer.","src":"zep-inverted-decision-map (1)","hard":false}
+{"q":"Is provenance available to whoever consumes the memory?","a":"Structurally yes through episode-entity indices, but it is absent from the generator context.","src":"zep-inverted-decision-map (1)","hard":false}
+{"q":"Who can correct the memory?","a":"No one directly; correction only occurs when later conversation contradicts stored information.","src":"zep-inverted-decision-map (1)","hard":false}
+{"q":"What does the system do when it doesn't know?","a":"Nothing special; it has no abstention path, confidence output, or unanswerable-question handling.","src":"zep-inverted-decision-map (1)","hard":false}
+{"q":"Does anything lose standing without being contradicted?","a":"No; facts remain current until contradicted, with no decay, expiry, last-seen field, or confirmation event.","src":"zep-inverted-decision-map (1)","hard":false}
+{"q":"How does the aggregate layer stay current, and what is drift worth?","a":"Single-step label propagation updates it on insert, with periodic full community refreshes to correct drift.","src":"zep-inverted-decision-map (1)","hard":false}
+{"q":"Which model constructs the graph?","a":"GPT-4o-mini constructs the graph throughout.","src":"zep-inverted-decision-map (1)","hard":true}

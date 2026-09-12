@@ -1,0 +1,19 @@
+{"q":"What events may enter memory: only user statements, selected application events, or the whole agent/tool lifecycle?","a":"What events may enter memory: only user statements, selected application events, or the whole agent/tool lifecycle?","src":"agentmemory-decision-space","hard":false}
+{"q":"Should privacy mean secret-pattern redaction, subject/category exclusion, or consent-aware routing?","a":"Should privacy mean secret-pattern redaction, subject/category exclusion, or consent-aware routing?","src":"agentmemory-decision-space","hard":false}
+{"q":"Should raw source material survive, or only extracted claims plus provenance pointers?","a":"Should raw source material survive, or only extracted claims plus provenance pointers?","src":"agentmemory-decision-space","hard":false}
+{"q":"What representation is primary: events, typed claims, entity graph, or epistemic assertions?","a":"What representation is primary: events, typed claims, entity graph, or epistemic assertions?","src":"agentmemory-decision-space","hard":false}
+{"q":"Is provenance a mutable annotation or immutable trust-boundary fact?","a":"Is provenance a mutable annotation or immutable trust-boundary fact?","src":"agentmemory-decision-space","hard":false}
+{"q":"When are two inputs duplicates: same delivery, same wording, or same proposition?","a":"When are two inputs duplicates: same delivery, same wording, or same proposition?","src":"agentmemory-decision-space","hard":false}
+{"q":"What happens on conflict: preserve both, merge, reject, or supersede?","a":"What happens on conflict: preserve both, merge, reject, or supersede?","src":"agentmemory-decision-space","hard":false}
+{"q":"May deleted/corrected beliefs regrow from old evidence?","a":"May deleted/corrected beliefs regrow from old evidence?","src":"agentmemory-decision-space","hard":false}
+{"q":"Can observed patterns become facts automatically, or only after confirmation?","a":"Can observed patterns become facts automatically, or only after confirmation?","src":"agentmemory-decision-space","hard":false}
+{"q":"Should hypotheses be stored as claims, questions, or not at all?","a":"Should hypotheses be stored as claims, questions, or not at all?","src":"agentmemory-decision-space","hard":false}
+{"q":"How is recency/use turned into forgetting?","a":"How is recency/use turned into forgetting?","src":"agentmemory-decision-space","hard":false}
+{"q":"Should retrieval be lexical, semantic, structural, or hybrid?","a":"Should retrieval be lexical, semantic, structural, or hybrid?","src":"agentmemory-decision-space","hard":false}
+{"q":"What is ordered first: relevance, recency, confidence, diversity, or authority?","a":"What is ordered first: relevance, recency, confidence, diversity, or authority?","src":"agentmemory-decision-space","hard":false}
+{"q":"Should the mode gate retrieval or disclosure?","a":"Should the mode gate retrieval or disclosure?","src":"agentmemory-decision-space","hard":false}
+{"q":"Should dictation and interactive assistance share retrieval?","a":"Should dictation and interactive assistance share retrieval?","src":"agentmemory-decision-space","hard":false}
+{"q":"What does the caller receive on success?","a":"What does the caller receive on success?","src":"agentmemory-decision-space","hard":false}
+{"q":"What happens on low confidence or absent evidence?","a":"What happens on low confidence or absent evidence?","src":"agentmemory-decision-space","hard":false}
+{"q":"Which failures may be hidden to preserve the main path?","a":"Which failures may be hidden to preserve the main path?","src":"agentmemory-decision-space","hard":false}
+{"q":"What is assumed idempotent and ordered?","a":"What is assumed idempotent and ordered?","src":"agentmemory-decision-space","hard":false}

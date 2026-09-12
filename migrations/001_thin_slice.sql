@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS schema_migrations (version TEXT PRIMARY KEY, applied_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS transcripts (id TEXT PRIMARY KEY, mode TEXT NOT NULL CHECK(mode IN ('dictation','hey_kivi')), raw_asr TEXT NOT NULL, formatted_text TEXT NOT NULL, written_response TEXT, semantic_processing TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, transcript_id TEXT NOT NULL UNIQUE REFERENCES transcripts(id), kind TEXT NOT NULL, state TEXT NOT NULL CHECK(state IN ('queued','processing','completed','failed','retrying','quarantined')), error_code TEXT, created_at TEXT NOT NULL, completed_at TEXT);
+CREATE TABLE IF NOT EXISTS memories (id TEXT PRIMARY KEY, kind TEXT NOT NULL CHECK(kind IN ('entity','preference','episode')), name TEXT NOT NULL, relation TEXT NOT NULL, value TEXT NOT NULL, transcript_id TEXT NOT NULL REFERENCES transcripts(id), created_at TEXT NOT NULL);
+CREATE VIRTUAL TABLE IF NOT EXISTS memory_fts USING fts5(memory_id UNINDEXED, name, relation, value);
+CREATE TABLE IF NOT EXISTS decision_traces (id TEXT PRIMARY KEY, transcript_id TEXT REFERENCES transcripts(id), memory_id TEXT REFERENCES memories(id), stage TEXT NOT NULL, outcome TEXT NOT NULL, detail_json TEXT NOT NULL, created_at TEXT NOT NULL);

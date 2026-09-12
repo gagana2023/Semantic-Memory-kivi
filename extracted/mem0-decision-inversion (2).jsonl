@@ -1,0 +1,24 @@
+{"q":"When new content arrives, what is the unit that triggers extraction?","a":"Every message pair (user turn + assistant turn), incrementally.","src":"mem0-decision-inversion (2)","hard":false}
+{"q":"What context should the extractor see besides the new content?","a":"Rolling async conversation summary + last 10 messages.","src":"mem0-decision-inversion (2)","hard":false}
+{"q":"Who decides what is salient enough to store?","a":"An LLM prompt asking for salient facts. Untyped, uncapped.","src":"mem0-decision-inversion (2)","hard":true}
+{"q":"Whose facts get retained?","a":"Both speakers, symmetric stores (speaker_1_memories, speaker_2_memories).","src":"mem0-decision-inversion (2)","hard":false}
+{"q":"When does extraction run relative to the request?","a":"Synchronously per pair; summary refresh async. (They attack Zep for async lag.)","src":"mem0-decision-inversion (2)","hard":false}
+{"q":"What shape does a stored memory take?","a":"A dense natural-language sentence (Mem0); entity–relation triplets (Mem0g).","src":"mem0-decision-inversion (2)","hard":true}
+{"q":"What links a memory to where it came from?","a":"Nothing in base Mem0. Mem0g keeps a creation timestamp on nodes. (Notably LOCOMO's own baseline system does keep dialog-turn refs — Mem0 dropped that.)","src":"mem0-decision-inversion (2)","hard":false}
+{"q":"How much confidence is a memory entitled to?","a":"One flat tier. Everything is asserted.","src":"mem0-decision-inversion (2)","hard":false}
+{"q":"May the extractor infer beyond what was said?","a":"Yes, explicitly: Mem0g prompts the LLM to reason about \"implicit information\".","src":"mem0-decision-inversion (2)","hard":false}
+{"q":"Is a hypothesis representable at all?","a":"No grammar for it. Storage can only assert.","src":"mem0-decision-inversion (2)","hard":false}
+{"q":"When a new fact contradicts a stored one, what resolves it?","a":"An LLM function-call picks ADD / UPDATE / DELETE / NOOP at write time.","src":"mem0-decision-inversion (2)","hard":true}
+{"q":"Where does a contradicted memory go?","a":"Base Mem0: physically deleted. Mem0g: marked invalid, retained for temporal reasoning.","src":"mem0-decision-inversion (2)","hard":true}
+{"q":"Which existing memories are checked for conflict?","a":"Top-s = 10 by embedding similarity to the candidate.","src":"mem0-decision-inversion (2)","hard":true}
+{"q":"What can the user do about a memory directly?","a":"Nothing. Correction only via saying something contradictory in a later turn.","src":"mem0-decision-inversion (2)","hard":false}
+{"q":"What happens to a memory nobody re-observes?","a":"Nothing. Memories persist forever unless contradicted.","src":"mem0-decision-inversion (2)","hard":false}
+{"q":"Can a memory change status without new content?","a":"No. Status is a function of content only.","src":"mem0-decision-inversion (2)","hard":false}
+{"q":"How are memories found at query time?","a":"Embedding top-k over memory strings; Mem0g adds entity-anchored subgraph + triplet similarity above threshold t.","src":"mem0-decision-inversion (2)","hard":false}
+{"q":"What ranks a memory above another?","a":"Cosine similarity alone. No recency prior, no evidence weight, no tier.","src":"mem0-decision-inversion (2)","hard":false}
+{"q":"Is everything retrieved allowed to be said?","a":"Yes — no separation. Retrieved ⇒ in prompt ⇒ sayable.","src":"mem0-decision-inversion (2)","hard":false}
+{"q":"Do different surfaces get different memory rights?","a":"No. One store, one path.","src":"mem0-decision-inversion (2)","hard":false}
+{"q":"What does the user see about how an answer was produced?","a":"Nothing. No trace, no sources, no \"what was withheld\".","src":"mem0-decision-inversion (2)","hard":false}
+{"q":"What should the system do when memory doesn't contain the answer?","a":"Answer anyway. The generation prompt mandates an answer \"less than 5-6 words\". The unanswerable question category was removed from the evaluation.","src":"mem0-decision-inversion (2)","hard":true}
+{"q":"How much of the user's attention may the system spend?","a":"Question never arises; the system never asks anything.","src":"mem0-decision-inversion (2)","hard":false}
+{"q":"What model does the extraction and update?","a":"GPT-4o-mini for everything, temperature 0.","src":"mem0-decision-inversion (2)","hard":false}

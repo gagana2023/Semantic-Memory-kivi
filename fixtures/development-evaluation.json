@@ -1,0 +1,6 @@
+{
+  "case_set": "development",
+  "position_claims": ["local_only", "user_authored_evidence", "hard_exclusions", "provenance", "permissions", "grounded_recall", "durable_control"],
+  "criteria": ["AC-FR-01", "AC-FR-02", "AC-FR-03", "AC-FR-04", "AC-FR-05", "AC-FR-06", "AC-FR-07", "AC-FR-08", "AC-FR-09", "AC-FR-10", "AC-FR-11", "AC-FR-12", "AC-FR-13", "AC-FR-14", "AC-FR-15", "AC-FR-16", "AC-FR-17", "AC-FR-18", "AC-FR-19", "AC-FR-20", "AC-FR-21", "AC-FR-22", "AC-FR-23", "AC-FR-24", "AC-FR-25", "AC-FR-26", "AC-FR-27", "AC-FR-28", "AC-FR-29", "AC-FR-30", "AC-FR-31", "AC-FR-32"],
+  "negative_cases": ["absent_history_answer_must_fail"]
+}

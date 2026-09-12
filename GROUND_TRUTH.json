@@ -1,0 +1,367 @@
+{
+  "corpus": "fixtures/development-500.json",
+  "persona": "Meera Sethi",
+  "period": {
+    "start": "2026-01-05",
+    "end": "2026-06-30",
+    "timezone": "Asia/Kolkata"
+  },
+  "items": [
+    {
+      "id": "gt_identity_role",
+      "type": "fact",
+      "record_ids": [
+        "meera_2026_0002"
+      ],
+      "correct_answer": "Meera Sethi is Product Lead at Ternary Studio.",
+      "recovery": "Direct statement in one passing introduction."
+    },
+    {
+      "id": "gt_join_date",
+      "type": "fact",
+      "record_ids": [
+        "meera_2026_0002"
+      ],
+      "correct_answer": "Meera joined Ternary Studio on 14 August 2023.",
+      "recovery": "Single-occurrence fact; recover from the introduction."
+    },
+    {
+      "id": "gt_atlas_owners",
+      "type": "fact",
+      "record_ids": [
+        "meera_2026_0003"
+      ],
+      "correct_answer": "Arun Menon owns Atlas backend; Sofia Martins owns design; Priya Raghavan is the initial Acme contact.",
+      "recovery": "Split the compound statement into atomic entity relations while preserving one source."
+    },
+    {
+      "id": "gt_atlas_scope",
+      "type": "fact",
+      "record_ids": [
+        "meera_2026_0030"
+      ],
+      "correct_answer": "Atlas replaces Acme’s legacy fleet-manager portal and covers vehicle status, driver access, invoices, and support.",
+      "recovery": "Recover the project purpose and four scope elements together."
+    },
+    {
+      "id": "gt_cedar",
+      "type": "episode",
+      "record_ids": [
+        "meera_2026_0057",
+        "meera_2026_0068",
+        "meera_2026_0074"
+      ],
+      "correct_answer": "Cedar was the Northwind analytics handoff; walkthrough was 29 January and access was confirmed 2 February, after which it was archived.",
+      "recovery": "Combine three dated records; do not infer that Cedar remains active."
+    },
+    {
+      "id": "gt_review_slot",
+      "type": "fact",
+      "record_ids": [
+        "meera_2026_0008",
+        "meera_2026_0110",
+        "meera_2026_0420"
+      ],
+      "correct_answer": "Current: Thursdays at 15:00 GMT from 12 February 2026. Superseded: Tuesdays at 15:00 GMT through 11 February.",
+      "recovery": "Order by occurred_at and retain the old cadence as superseded history."
+    },
+    {
+      "id": "gt_arun_role",
+      "type": "fact",
+      "record_ids": [
+        "meera_2026_0148",
+        "meera_2026_0165",
+        "meera_2026_0173"
+      ],
+      "correct_answer": "Arun Menon became Atlas Technical Lead on 2 March 2026 and owns release sign-off.",
+      "recovery": "Combine two implied uses with the later explicit title confirmation."
+    },
+    {
+      "id": "gt_manager",
+      "type": "fact",
+      "record_ids": [
+        "meera_2026_0187",
+        "meera_2026_0189"
+      ],
+      "correct_answer": "Current from 16 March: Leena Iyer. Before then: Nandini Rao; Nandini remains Atlas sponsor.",
+      "recovery": "Temporal supersession with explicit change date; retain both historical values."
+    },
+    {
+      "id": "gt_meterline",
+      "type": "fact",
+      "record_ids": [
+        "meera_2026_0079",
+        "meera_2026_0271"
+      ],
+      "correct_answer": "Current from 9 April: keep Stripe Billing and build a thin export service; Meterline is stopped. Superseded: build Meterline in Q2.",
+      "recovery": "Decision reversal; current answer must not blend old and new."
+    },
+    {
+      "id": "gt_harbor_scope",
+      "type": "fact",
+      "record_ids": [
+        "meera_2026_0211",
+        "meera_2026_0483"
+      ],
+      "correct_answer": "Harbor covers invitations, identity checks, and first login; it excludes training and payroll.",
+      "recovery": "Combine the proposal and later build check."
+    },
+    {
+      "id": "gt_harbor_owners",
+      "type": "fact",
+      "record_ids": [
+        "meera_2026_0256"
+      ],
+      "correct_answer": "Meera is product lead; Omar runs research logistics; Sofia owns interaction design.",
+      "recovery": "Recover work-level ownership relations."
+    },
+    {
+      "id": "gt_harbor_date",
+      "type": "episode",
+      "record_ids": [
+        "meera_2026_0256",
+        "meera_2026_0401",
+        "meera_2026_0483"
+      ],
+      "correct_answer": "Current pilot date: 13 July 2026, changed on 26 May from 8 June.",
+      "recovery": "Temporal supersession; cite the reschedule and later confirmation."
+    },
+    {
+      "id": "gt_figma_project",
+      "type": "fact",
+      "record_ids": [
+        "meera_2026_0259",
+        "meera_2026_0261"
+      ],
+      "correct_answer": "Current design workspace is `Acme Product / Atlas` from 6 April; earlier workspace was `ACME / Atlas 2026` (persona prior state).",
+      "recovery": "Infer current workspace from repeated later paths; corpus itself only supports the new value."
+    },
+    {
+      "id": "gt_devika",
+      "type": "fact",
+      "record_ids": [
+        "meera_2026_0278"
+      ],
+      "correct_answer": "Devika Shah joined the Atlas pod on 20 April and owns beta and launch test plans.",
+      "recovery": "Single passing assignment."
+    },
+    {
+      "id": "gt_atlas_dates",
+      "type": "episode",
+      "record_ids": [
+        "meera_2026_0329",
+        "meera_2026_0426",
+        "meera_2026_0460",
+        "meera_2026_0475"
+      ],
+      "correct_answer": "Atlas client beta was 18 May and production launch occurred 22 June 2026.",
+      "recovery": "Combine planned dates with the launch completion record."
+    },
+    {
+      "id": "gt_beta_bug",
+      "type": "episode",
+      "record_ids": [
+        "meera_2026_0359",
+        "meera_2026_0360",
+        "meera_2026_0361",
+        "meera_2026_0387"
+      ],
+      "correct_answer": "On 18 May during Atlas beta, the Safari invoice-PDF bug was routed to Devika; on 21 May the team decided to ship the fix.",
+      "recovery": "Identify by date, Slack/Zoom application context, and bug topic."
+    },
+    {
+      "id": "gt_beta_dedup",
+      "type": "episode",
+      "record_ids": [
+        "meera_2026_0360",
+        "meera_2026_0361"
+      ],
+      "correct_answer": "The 18 May Safari PDF bug-routing messages are retries/near-duplicates and should collapse to one memory.",
+      "recovery": "Semantic near-duplicate merge; distinct transcript IDs must not inflate independent facts."
+    },
+    {
+      "id": "gt_pricing_structure",
+      "type": "fact",
+      "record_ids": [
+        "meera_2026_0413",
+        "meera_2026_0435"
+      ],
+      "correct_answer": "Current from 28 May: two engagement models with ‘Talk to us’ pricing. Superseded: three named packages with indicative prices.",
+      "recovery": "Decision reversal with dated supersession."
+    },
+    {
+      "id": "gt_pricing_owner",
+      "type": "fact",
+      "record_ids": [
+        "meera_2026_0318",
+        "meera_2026_0419"
+      ],
+      "correct_answer": "Jonas Reed wrote the first two copy passes; Sofia Martins owns final page design from 1 June after Jonas’s contract ended.",
+      "recovery": "Combine handoff facts across May and June."
+    },
+    {
+      "id": "gt_contact",
+      "type": "fact",
+      "record_ids": [
+        "meera_2026_0003",
+        "meera_2026_0417",
+        "meera_2026_0420",
+        "meera_2026_0426",
+        "meera_2026_0490"
+      ],
+      "correct_answer": "Current from 1 June: Ria Raghavan is Acme coordination contact. Priya Raghavan was the prior contact and left on 29 May.",
+      "recovery": "Infer handoff from departure plus repeated later addressing; disambiguate similar names by role/time."
+    },
+    {
+      "id": "gt_elliot",
+      "type": "fact",
+      "record_ids": [
+        "meera_2026_0417"
+      ],
+      "correct_answer": "Elliot Barnes is the final Acme launch approver after Priya’s departure.",
+      "recovery": "Single passing fact in the handoff recap."
+    },
+    {
+      "id": "gt_pricing_publish",
+      "type": "episode",
+      "record_ids": [
+        "meera_2026_0435",
+        "meera_2026_0494"
+      ],
+      "correct_answer": "The pricing page is approved for publication on 2 July, pending one accessibility check.",
+      "recovery": "Combine legal review and final assignment."
+    },
+    {
+      "id": "gt_atlas_launch",
+      "type": "episode",
+      "record_ids": [
+        "meera_2026_0475",
+        "meera_2026_0490"
+      ],
+      "correct_answer": "Atlas launched 22 June, has two non-blocking defects in monitoring, and has a 7 July closeout.",
+      "recovery": "Combine launch and review records."
+    },
+    {
+      "id": "gt_retention_conflict",
+      "type": "fact",
+      "record_ids": [
+        "meera_2026_0198",
+        "meera_2026_0208"
+      ],
+      "correct_answer": "Unresolved contradiction: Atlas support-log retention is stated as both 90 and 120 days.",
+      "recovery": "Surface both stated values and abstain from choosing; no correction resolves them."
+    },
+    {
+      "id": "gt_pref_slack_opening",
+      "type": "preference",
+      "record_ids": [
+        "meera_2026_0003",
+        "meera_2026_0042",
+        "meera_2026_0115",
+        "meera_2026_0148",
+        "meera_2026_0256",
+        "meera_2026_0278",
+        "meera_2026_0419",
+        "meera_2026_0494"
+      ],
+      "correct_answer": "Observed: first Slack messages before noon tend to open ‘Morning—’ plus a short topic label.",
+      "recovery": "Infer only from repeated demonstrations; keep observed, not stated."
+    },
+    {
+      "id": "gt_pref_assignments",
+      "type": "preference",
+      "record_ids": [
+        "meera_2026_0003",
+        "meera_2026_0008",
+        "meera_2026_0015",
+        "meera_2026_0042",
+        "meera_2026_0110",
+        "meera_2026_0115",
+        "meera_2026_0148",
+        "meera_2026_0359",
+        "meera_2026_0401",
+        "meera_2026_0419",
+        "meera_2026_0494"
+      ],
+      "correct_answer": "Observed: actionable Slack requests usually name an owner and explicit weekday/date.",
+      "recovery": "Aggregate repeated independent demonstrations; acknowledgements are neutral exceptions."
+    },
+    {
+      "id": "gt_pref_email_prose",
+      "type": "preference",
+      "record_ids": [
+        "meera_2026_0015",
+        "meera_2026_0329",
+        "meera_2026_0420"
+      ],
+      "correct_answer": "Observed: client emails use short prose paragraphs with context before the ask.",
+      "recovery": "Infer from repeated external-email examples; one-line mundane emails are exceptions."
+    },
+    {
+      "id": "gt_pref_signoff",
+      "type": "preference",
+      "record_ids": [
+        "meera_2026_0015",
+        "meera_2026_0329",
+        "meera_2026_0420"
+      ],
+      "correct_answer": "Observed: client emails close ‘Best, Meera’; Slack and documents do not.",
+      "recovery": "Infer across external email records only; never promote to stated."
+    },
+    {
+      "id": "gt_pref_recap_order",
+      "type": "preference",
+      "record_ids": [
+        "meera_2026_0008",
+        "meera_2026_0110",
+        "meera_2026_0131",
+        "meera_2026_0165",
+        "meera_2026_0387",
+        "meera_2026_0426"
+      ],
+      "correct_answer": "Observed: meeting recaps place decisions before actions.",
+      "recovery": "Repeated structure across dated recaps."
+    },
+    {
+      "id": "gt_pref_decision_format",
+      "type": "preference",
+      "record_ids": [
+        "meera_2026_0030",
+        "meera_2026_0079",
+        "meera_2026_0271",
+        "meera_2026_0460"
+      ],
+      "correct_answer": "Observed: decision documents use Context, Decision, Rationale, Open questions in that order.",
+      "recovery": "Repeated Notion document formatting; observed only."
+    },
+    {
+      "id": "gt_pref_word_use",
+      "type": "preference",
+      "record_ids": [
+        "meera_2026_0344",
+        "meera_2026_0441"
+      ],
+      "correct_answer": "Observed: Meera replaces ‘leverage’ with ‘use’ in her drafts.",
+      "recovery": "Two independent revisions demonstrate the preference without stating a rule."
+    },
+    {
+      "id": "gt_people_disambiguation",
+      "type": "fact",
+      "record_ids": [
+        "meera_2026_0173",
+        "meera_2026_0417"
+      ],
+      "correct_answer": "Priya and Ria Raghavan are different Acme contacts; Arun Menon is Ternary technical lead and Varun Menon is Acme security engineer.",
+      "recovery": "Use organisation, role, project, and time—not phonetics alone—to resolve ASR confusions."
+    },
+    {
+      "id": "gt_portfolio_current",
+      "type": "fact",
+      "record_ids": [
+        "meera_2026_0498"
+      ],
+      "correct_answer": "At 30 June: Atlas launched; Harbor active for 13 July; pricing approved for 2 July; Meterline stopped; Cedar archived.",
+      "recovery": "Current-state portfolio check corroborating earlier distributed facts."
+    }
+  ]
+}

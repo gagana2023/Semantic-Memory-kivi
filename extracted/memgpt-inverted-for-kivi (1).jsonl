@@ -1,0 +1,20 @@
+{"q":"When something worth keeping is said, what should trigger the write?","a":"Context scarcity.","src":"memgpt-inverted-for-kivi (1)","hard":false}
+{"q":"Who has authority to write to memory: the model, a deterministic component, or the user?","a":"The model, alone.","src":"memgpt-inverted-for-kivi (1)","hard":true}
+{"q":"What happens to raw input after it's been used?","a":"Kept forever.","src":"memgpt-inverted-for-kivi (1)","hard":true}
+{"q":"What is the unit of a memory: an utterance, or a claim assembled from several?","a":"An utterance or a short agent-authored line.","src":"memgpt-inverted-for-kivi (1)","hard":false}
+{"q":"What shape should durable memory have: text the model writes for itself, or records something else can read?","a":"A fixed-size read/write block of unstructured text, editable only through function calls (§2.1). No fields, no ids, no timestamps, no source, no confidence.","src":"memgpt-inverted-for-kivi (1)","hard":true}
+{"q":"On what basis should memory be split into stores?","a":"By origin.","src":"memgpt-inverted-for-kivi (1)","hard":false}
+{"q":"When a fact enters memory, what should record how much the system is entitled to believe it?","a":"Nothing. Everything in working context is a flat assertion in the same voice.","src":"memgpt-inverted-for-kivi (1)","hard":false}
+{"q":"Whose facts is the system storing?","a":"Anyone's.","src":"memgpt-inverted-for-kivi (1)","hard":false}
+{"q":"What should cause information to leave the working set?","a":"Token thresholds. Warn at ~70%, flush at 100%, evict ~50% of the window (§2.2). Recency determines what goes.","src":"memgpt-inverted-for-kivi (1)","hard":false}
+{"q":"When information has to be compressed, what should the compressed form be?","a":"A recursive summary — the previous summary plus the newly evicted messages, regenerated at each flush and parked at the head of the queue (§2.1–2.2).","src":"memgpt-inverted-for-kivi (1)","hard":false}
+{"q":"When new information contradicts something stored, what happens to the old version?","a":"It's overwritten.","src":"memgpt-inverted-for-kivi (1)","hard":false}
+{"q":"What has to be true for a contradiction to be noticed at all?","a":"The old fact must already be in the context window, and the model must happen to spot the conflict mid-conversation.","src":"memgpt-inverted-for-kivi (1)","hard":false}
+{"q":"What should determine which memories come back for a given request?","a":"Embedding cosine similarity, pgvector + HNSW over ada-002 vectors, paginated (§3.2.1).","src":"memgpt-inverted-for-kivi (1)","hard":true}
+{"q":"Who decides when enough has been retrieved?","a":"The model, by choosing whether to request another page (§2.3–2.4, function chaining via request_heartbeat).","src":"memgpt-inverted-for-kivi (1)","hard":true}
+{"q":"Should being retrieved and being usable be the same thing?","a":"Yes, necessarily.","src":"memgpt-inverted-for-kivi (1)","hard":false}
+{"q":"How much of the memory system should the user be able to see?","a":"None of it.","src":"memgpt-inverted-for-kivi (1)","hard":false}
+{"q":"Should the system volunteer what it remembers, or wait to be asked?","a":"Volunteer, enthusiastically.","src":"memgpt-inverted-for-kivi (1)","hard":true}
+{"q":"When memory doesn't contain the answer, what should the system do?","a":"Guess. The MemGPT persona is instructed to \"reply with a best guess using the information in core memory\" and conversation search (Appendix 6.1.1).","src":"memgpt-inverted-for-kivi (1)","hard":true}
+{"q":"When a stored memory is wrong, how does it get fixed?","a":"Only if the model notices and rewrites it (D11).","src":"memgpt-inverted-for-kivi (1)","hard":false}
+{"q":"What should happen to a memory that hasn't been relevant in a long time?","a":"Nothing. Working-context entries persist until explicitly overwritten; recall storage is kept indefinitely (§2.2).","src":"memgpt-inverted-for-kivi (1)","hard":false}

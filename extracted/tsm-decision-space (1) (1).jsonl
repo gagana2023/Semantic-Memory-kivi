@@ -1,0 +1,24 @@
+{"q":"When a turn arrives, what determines whether anything is written at all?","a":"Nothing. Everything extractable is extracted; the only gate is dedupe.","src":"tsm-decision-space (1) (1)","hard":false}
+{"q":"Whose words count as evidence?","a":"User messages only, at construction (stated as an efficiency choice, App. A.1.1).","src":"tsm-decision-space (1) (1)","hard":true}
+{"q":"What time does a memory carry?","a":"Semantic/event time, parsed from language, not dialogue time. The headline.","src":"tsm-decision-space (1) (1)","hard":true}
+{"q":"What is discarded?","a":"Duplicates. Nothing else.","src":"tsm-decision-space (1) (1)","hard":false}
+{"q":"What is a memory, structurally?","a":"Two tiers.","src":"tsm-decision-space (1) (1)","hard":false}
+{"q":"Should inferred user traits be stored as durable, retrievable objects?","a":"Yes — Persona_z = LLM summary of \"stable user traits, preferences, and behavioral patterns\", written to store, embedded, injected into context.","src":"tsm-decision-space (1) (1)","hard":true}
+{"q":"Does a stored item carry epistemic status?","a":"No. A parsed fact, an entity summary and an inferred persona are the same kind of object with the same standing.","src":"tsm-decision-space (1) (1)","hard":false}
+{"q":"What temporal granularity groups durative memory?","a":"Fixed one-month slices. Acknowledged in Limitations as possibly wrong, left to future work.","src":"tsm-decision-space (1) (1)","hard":true}
+{"q":"What signal groups mentions into a topic?","a":"GMM over embeddings of entity names within a slice (Eq. 4: GMM(h^name_e)).","src":"tsm-decision-space (1) (1)","hard":true}
+{"q":"Is the knowledge graph itself returned as answer context?","a":"No — index only. Their own case study (App. A.2) says facts alone are \"insufficient, point-wise, and instant\"; raw turns carry the answer.","src":"tsm-decision-space (1) (1)","hard":false}
+{"q":"When new evidence contradicts stored evidence, what resolves it?","a":"An LLM compares the new fact against existing edges on semantics and time, then applies one of DUPLICATE / ADD / INVALIDATE / UPDATE, online","src":"tsm-decision-space (1) (1)","hard":false}
+{"q":"Is anything ever removed?","a":"No delete path. INVALIDATE closes a validity interval; the row stays.","src":"tsm-decision-space (1) (1)","hard":false}
+{"q":"Does consolidation respect prior state?","a":"No. Sleep-time consolidation \"reorganize[s] all entity mentions via GMM-based clustering and re-summarise[s]\" — a full recompute from the mention set.","src":"tsm-decision-space (1) (1)","hard":false}
+{"q":"Does old evidence lose standing over time?","a":"No decay. An item ages only in the sense that the query's time window may exclude it.","src":"tsm-decision-space (1) (1)","hard":false}
+{"q":"Can repetition alone change an item's status?","a":"Implicitly yes — more mentions means a stronger cluster and a more confident summary. There is no confirmation event anywhere in the system.","src":"tsm-decision-space (1) (1)","hard":false}
+{"q":"Retrieve over one pool or several?","a":"One: M = M_topic ∪ M_persona ∪ M_raw. Every query sees everything.","src":"tsm-decision-space (1) (1)","hard":false}
+{"q":"What determines rank?","a":"Lexicographic — time-match indicator is the primary key, semantic similarity only breaks ties (Eq. 16).","src":"tsm-decision-space (1) (1)","hard":true}
+{"q":"What happens when the temporal constraint is wrong or absent?","a":"Asymmetric. Topics and personas are hard-filtered out (I[τ ∈ T_q]); raw chat turns are exempt (Keep = 1 unconditionally).","src":"tsm-decision-space (1) (1)","hard":true}
+{"q":"Retrieve-then-filter, or filter-then-retrieve?","a":"Top-K = 25 first, temporal filter second, \"post-retrieval in our implementation\" — their own parenthetical flags this as an implementation choice.","src":"tsm-decision-space (1) (1)","hard":false}
+{"q":"How much compute at recall time?","a":"Almost none — spaCy parse, dense retrieval, sort.","src":"tsm-decision-space (1) (1)","hard":false}
+{"q":"Is knowing separated from saying?","a":"No. Retrieved ⇒ injected into the prompt ⇒ sayable. There is no disclosure stage.","src":"tsm-decision-space (1) (1)","hard":false}
+{"q":"What is exposed to the user about the memory?","a":"Nothing. The answer only. No provenance, no store surface, no trace.","src":"tsm-decision-space (1) (1)","hard":false}
+{"q":"What happens when the system doesn't have the answer?","a":"Undefined. The generator decides. Abstention appears in LongMemEval's stated abilities and in the judge prompts, and is not reported in any results table.","src":"tsm-decision-space (1) (1)","hard":false}
+{"q":"Who can correct the memory?","a":"Nobody. No user write path exists.","src":"tsm-decision-space (1) (1)","hard":false}

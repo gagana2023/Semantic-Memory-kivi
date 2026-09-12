@@ -1,0 +1,24 @@
+{"q":"Is memory ingestion a push (caller submits) or a pull (system watches a source)?","a":"both, with the watcher primary — watch_folder polls a directory (agent.py:535) and POST /ingest exists (agent.py:613).","src":"DECISION-SPACE","hard":false}
+{"q":"Does the system accept any modality, or only the modality it can reason about carefully?","a":"27 extensions across text/image/audio/video/PDF (agent.py:42–68).","src":"DECISION-SPACE","hard":false}
+{"q":"Is raw input retained, or only the derived representation?","a":"both — raw_text and summary are separate columns (agent.py:87–88), and the ingest prompt tells the model to put its own full description into raw_text (agent.py:334)","src":"DECISION-SPACE","hard":true}
+{"q":"Is a memory a typed record or an untyped blob with tags?","a":"untyped. One flat row with entities/topics as free-text JSON arrays (agent.py:89–90).","src":"DECISION-SPACE","hard":false}
+{"q":"Is confidence/salience a scalar, a category, or absent?","a":"a scalar — importance REAL DEFAULT 0.5 (agent.py:93), assigned by the model from a one-line instruction (agent.py:330).","src":"DECISION-SPACE","hard":false}
+{"q":"Where do relations live — in the schema or in the text?","a":"in a JSON blob appended to both endpoints of the edge (agent.py:210–222).","src":"DECISION-SPACE","hard":false}
+{"q":"What is dropped at ingest, and is the drop recorded?","a":"text truncated at 10 000 characters (agent.py:557); media over 20 MB skipped (agent.py:509–511).","src":"DECISION-SPACE","hard":false}
+{"q":"On re-ingesting the same content, does the system dedupe, version, or duplicate?","a":"duplicate.","src":"DECISION-SPACE","hard":false}
+{"q":"When new information contradicts old, what happens?","a":"nothing. Both rows persist; the query agent resolves the contradiction in prose, or doesn't.","src":"DECISION-SPACE","hard":false}
+{"q":"Is deletion real deletion?","a":"yes — DELETE FROM memories WHERE id = ?","src":"DECISION-SPACE","hard":false}
+{"q":"How is relevant memory found — search, embedding, or \"read everything\"?","a":"read everything.","src":"DECISION-SPACE","hard":false}
+{"q":"Is retrieval separable from disclosure?","a":"the question is not present. One path, one audience; everything retrieved is available to the answer.","src":"DECISION-SPACE","hard":false}
+{"q":"Are consolidations a separate retrieval tier?","a":"yes — read_consolidation_history is a distinct tool (agent.py:231, wired at :372) returning the last 10.","src":"DECISION-SPACE","hard":false}
+{"q":"Does the caller get memories or an answer?","a":"an answer, with [Memory N] citations requested by prompt (agent.py:369) — therefore not guaranteed, not validated, not resolvable to a row by any code.","src":"DECISION-SPACE","hard":false}
+{"q":"Is the HTTP surface authenticated?","a":"no. Binds 0.0.0.0 (agent.py:688) with no auth, no CORS policy, no rate limit, and a /clear endpoint that wipes the DB and the user's files.","src":"DECISION-SPACE","hard":false}
+{"q":"On extraction failure, is the input retried, quarantined, or dropped?","a":"dropped. The try around ingestion logs and continues (agent.py:562–564), and the processed_files insert runs outside that try (agent.py:565), so a failed file is permanently marked","src":"DECISION-SPACE","hard":false}
+{"q":"What happens when the model doesn't call the tool?","a":"nothing happens and nobody knows.","src":"DECISION-SPACE","hard":false}
+{"q":"Is low confidence represented at all?","a":"no. importance is salience, not confidence, and nothing abstains.","src":"DECISION-SPACE","hard":false}
+{"q":"Does memory decay, expire, or accumulate forever?","a":"accumulate forever.","src":"DECISION-SPACE","hard":false}
+{"q":"Is consolidation a one-way ratchet?","a":"yes. consolidated flips 0→1 (agent.py:224) and nothing flips it back.","src":"DECISION-SPACE","hard":false}
+{"q":"When does consolidation run — on volume, on time, or on demand?","a":"a fixed timer (agent.py:582) gated by a count check (>= 2, agent.py:591), plus manual POST /consolidate (agent.py:635).","src":"DECISION-SPACE","hard":false}
+{"q":"What is assumed idempotent?","a":"Schema creation genuinely is (agent.py:84); file processing is made idempotent by path (agent.py:549), a weaker guarantee than content-idempotency; store_memory is not idempotent and has no","src":"DECISION-SPACE","hard":false}
+{"q":"What is assumed ordered?","a":"created_at DESC as ISO-8601 TEXT (agent.py:156) — correct only because the format is lexically sortable and always UTC (agent.py:136), an unstated invariant no test protects.","src":"DECISION-SPACE","hard":false}
+{"q":"Is concurrent access considered?","a":"No. A new sqlite3.connect per tool call with default settings (agent.py:82), no WAL, no busy timeout, while three concurrent async tasks write (watcher, consolidation loop","src":"DECISION-SPACE","hard":false}

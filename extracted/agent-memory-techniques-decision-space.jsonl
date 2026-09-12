@@ -1,0 +1,23 @@
+{"q":"Does the write path see raw conversation, or a filtered subset?","a":"raw. extract_facts (10:277) concatenates every message, both roles, into one blob and hands it to the LLM.","src":"agent-memory-techniques-decision-space","hard":false}
+{"q":"Is anything excluded at extraction time?","a":"only by prompt instruction, and only for form, not category.","src":"agent-memory-techniques-decision-space","hard":false}
+{"q":"Extraction — one LLM call per turn, or batched?","a":"per exchange, synchronously, inline with the response.","src":"agent-memory-techniques-decision-space","hard":false}
+{"q":"Does extraction have an \"extracted nothing\" path?","a":"yes, explicitly.","src":"agent-memory-techniques-decision-space","hard":false}
+{"q":"Confidence — a scalar, or a categorical epistemic status?","a":"a scalar, everywhere.","src":"agent-memory-techniques-decision-space","hard":false}
+{"q":"Is there any bi-temporal modelling?","a":"yes, in exactly one notebook.","src":"agent-memory-techniques-decision-space","hard":false}
+{"q":"On dedupe, does the old record survive?","a":"yes in technique 10, no in technique 14.","src":"agent-memory-techniques-decision-space","hard":false}
+{"q":"Does deletion actually delete?","a":"technique 30 is the only one that tries, and it's thorough about breadth: delete_user (30:1174) hits hot, warm, cold, and graph tiers and writes four","src":"agent-memory-techniques-decision-space","hard":false}
+{"q":"How is a contradiction detected?","a":"two-stage, similarity-gated.","src":"agent-memory-techniques-decision-space","hard":false}
+{"q":"Who wins?","a":"recency, by default, in both places.","src":"agent-memory-techniques-decision-space","hard":false}
+{"q":"Is retrieval separable from disclosure?","a":"no. Nowhere in the repo.","src":"agent-memory-techniques-decision-space","hard":false}
+{"q":"Is diversity or redundancy managed at read time?","a":"only in technique 20, and only as a menu.","src":"agent-memory-techniques-decision-space","hard":false}
+{"q":"What does the system do when it doesn't know?","a":"nothing. There is no abstention path in the repo.","src":"agent-memory-techniques-decision-space","hard":false}
+{"q":"Decay by wall-clock age, or by idle time since last use?","a":"idle time.","src":"agent-memory-techniques-decision-space","hard":false}
+{"q":"Does retrieval reinforce?","a":"yes, and unconditionally.","src":"agent-memory-techniques-decision-space","hard":false}
+{"q":"Are some memories exempt from decay?","a":"no, and admitted.","src":"agent-memory-techniques-decision-space","hard":false}
+{"q":"Does storage pressure change the forgetting policy?","a":"yes — apply_storage_pressure (19:364) mutates self.prune_threshold from 0.1 up to 0.5 as utilisation goes 80%→100%.","src":"agent-memory-techniques-decision-space","hard":false}
+{"q":"Is re-processing the same transcript idempotent?","a":"no, and this is the least-examined assumption in the repo.","src":"agent-memory-techniques-decision-space","hard":false}
+{"q":"Does write order matter?","a":"yes, unavoidably, and it's never mentioned.","src":"agent-memory-techniques-decision-space","hard":false}
+{"q":"One memory type, or several?","a":"Two answers coexist in the repo, uncombined.","src":"agent-memory-techniques-decision-space","hard":false}
+{"q":"Similarity alone, or blended with something?","a":"Three different answers, none reconciled","src":"agent-memory-techniques-decision-space","hard":false}
+{"q":"What happens when a component fails?","a":"Three different answers, all quiet","src":"agent-memory-techniques-decision-space","hard":false}
+{"q":"Is there any concurrency story?","a":"No. Every store is a Python list or dict mutated in place (10:238, 19:279, 30:219).","src":"agent-memory-techniques-decision-space","hard":false}
