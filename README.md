@@ -2,6 +2,22 @@
 
 Kivi is a local, single-user text client for durable work memory. It turns eligible user dictations into typed, inspectable memories and uses them to answer Hey Kivi requests with source provenance. It deliberately does not provide speech recognition, external calendar integration, hosted storage, multiple users, autonomous actions, or a general-purpose assistant.
 
+**Submission map**
+
+| Brief item | Where |
+|---|---|
+| Product positioning statement and vision | [kivi-semantic-memory-position.md](kivi-semantic-memory-position.md) (§3 is the positioning statement; §1–9 the vision) |
+| Design and specification | [DESIGN.md](DESIGN.md), [SPECIFICATION.md](SPECIFICATION.md), [DECISIONS.md](DECISIONS.md) |
+| Source code | [src/kivi/](src/kivi/) — API, services, storage, worker, evaluation, CLI, templates |
+| Schema and migrations | [migrations/](migrations/) |
+| Seed data | [fixtures/development-500.json](fixtures/development-500.json), regenerable with [generate_corpus.py](generate_corpus.py) |
+| Corpus and evaluation | [CORPUS.md](CORPUS.md), [PERSONA.md](PERSONA.md), [EVAL_QUESTIONS.json](EVAL_QUESTIONS.json), [GROUND_TRUTH.json](GROUND_TRUTH.json) |
+| Generated results | [results.json](results.json), [summary.md](summary.md), [evaluation-sensitivity.md](evaluation-sensitivity.md), [evaluation-after-fixes.md](evaluation-after-fixes.md) |
+| Limitations | [LIMITATIONS.md](LIMITATIONS.md) |
+| How to run / review | [RUN.md](RUN.md) |
+
+`research/`, `extracted/`, `merged/`, `clusters.json`, `build_merged.py`, `MERGED_INVENTORY.md`, and `RESOLUTIONS.md` are the literature-survey working files behind the design decisions; they are not needed to run or review the system.
+
 ## Use cases
 
 Hey Kivi can recall facts and episodes from work history, combine evidence from separate dictations, distinguish current from historical facts, draft grounded text, and create internal schedule entries. Its v1 tool surface is limited to `recall_search`, `draft_reply`, and `schedule_reschedule`; scheduling has no external side effect.
@@ -108,4 +124,14 @@ Some failures follow deliberate design boundaries rather than implementation bug
 
 ## AI use
 
-Part One—the product positioning and vision—was written by me without generative AI. Generative AI was used for implementation, corpus generation, and evaluation construction, under the design decisions I made.
+Part One — the product positioning and vision in [kivi-semantic-memory-position.md](kivi-semantic-memory-position.md) — was written by me without generative AI.
+
+Generative AI (Claude, through Claude Code) was used, under the design decisions I made and recorded in [DESIGN.md](DESIGN.md) and [DECISIONS.md](DECISIONS.md), for:
+
+- **Literature survey scaffolding** — extracting decision spaces from memory-system papers into `extracted/` and merging them in `merged/` for me to resolve.
+- **Implementation** — the Python source, migrations, templates, and tests, with the rule that no design decision is made during implementation (see `CLAUDE.md`).
+- **Corpus generation** — `generate_corpus.py` and the 500-record development corpus, from the persona and planted-signal plan I specified in [PERSONA.md](PERSONA.md) and [CORPUS.md](CORPUS.md).
+- **Evaluation construction** — the 52 questions and ground truth, and the evaluator/report code.
+- **Documentation drafting** — README, RUN.md, and LIMITATIONS.md, which I reviewed against the running system.
+
+All evaluation numbers come from running the checked-in code locally; none were produced or edited by a model.

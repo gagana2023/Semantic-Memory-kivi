@@ -49,12 +49,12 @@ It deliberately is not speech recognition, a general assistant, a multi-user pla
 
 | Milestone | Status |
 |---|---|
-| 1. Local thin slice | Not started |
-| 2. Complete write path and corpus import | Not started |
-| 3. Read path, permission, three tools | Not started |
-| 4. User control, lifecycle, inspection | Not started |
-| 5. Reproducible full-pipeline evaluation | Not started |
-| 6. Clean-clone and foreign-corpus release gate | Not started |
+| 1. Local thin slice | Complete |
+| 2. Complete write path and corpus import | Complete |
+| 3. Read path, permission, three tools | Complete |
+| 4. User control, lifecycle, inspection | Complete |
+| 5. Reproducible full-pipeline evaluation | Complete |
+| 6. Clean-clone and foreign-corpus release gate | Complete |
 
 ## Standing rules
 

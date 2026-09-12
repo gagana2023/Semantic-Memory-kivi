@@ -55,7 +55,7 @@ def reset_database(settings) -> dict:
         if path.exists():
             path.unlink()
             removed.append(str(path))
-    for name in ("evaluation-output.txt", "evaluation-report.json", "evaluation-report.md"):
+    for name in ("import-output.txt", "evaluation-output.txt", "evaluation-report.json", "evaluation-report.md"):
         path = ROOT / name
         if path.exists():
             path.unlink()

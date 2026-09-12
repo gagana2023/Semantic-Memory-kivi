@@ -9,3 +9,8 @@ __pycache__/
 *.db-shm
 .venv/
 venv/
+config/model-locks.json
+import-output.txt
+evaluation-output.txt
+eval.db*
+eval-out/
